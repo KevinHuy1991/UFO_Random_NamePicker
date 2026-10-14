@@ -1,0 +1,3430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Alien Abduction Random Name Picker 🛸</title>
+  <meta name="description" content="Cinematic sci-fi UFO alien abduction random name picker with chibi characters, procedural 60fps canvas animations, and Web Audio synthesizer.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================================================
+       DESIGN SYSTEM & CYBERPUNK-LITE GLASSMORPHIC STYLING
+       ========================================================================== */
+    :root {
+      --bg-dark: #060919;
+      --panel-bg: rgba(12, 18, 38, 0.78);
+      --panel-border: rgba(0, 245, 255, 0.25);
+      --panel-glow: rgba(0, 245, 255, 0.12);
+      --neon-cyan: #00f5ff;
+      --neon-green: #39ff14;
+      --neon-magenta: #ff007f;
+      --neon-amber: #ffb703;
+      --neon-purple: #9d4edd;
+      --text-main: #f0f6fc;
+      --text-muted: #8b9bb4;
+      --font-display: 'Orbitron', -apple-system, sans-serif;
+      --font-body: 'Fredoka', -apple-system, sans-serif;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --shadow-glow: 0 0 20px rgba(0, 245, 255, 0.35);
+      --shadow-panel: 0 12px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px var(--panel-border);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-size: 14px;
+    }
+
+    /* Fullscreen Graphics Canvas */
+    #world-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+      cursor: crosshair;
+    }
+
+    /* Vignette and Cinematic Grain Overlay */
+    .cinematic-vignette {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+      background: radial-gradient(circle at 50% 45%, transparent 60%, rgba(3, 5, 15, 0.65) 100%);
+    }
+
+    /* Top HUD Navigation Bar */
+    .top-hud {
+      position: absolute;
+      top: 14px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .top-hud > * {
+      pointer-events: auto;
+    }
+
+    .brand-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--panel-border);
+      border-radius: 999px;
+      padding: 7px 18px 7px 12px;
+      box-shadow: var(--shadow-panel);
+    }
+
+    .brand-icon {
+      font-size: 22px;
+      animation: floatUfo 3s ease-in-out infinite;
+      display: inline-block;
+      filter: drop-shadow(0 0 8px var(--neon-cyan));
+    }
+
+    @keyframes floatUfo {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-3px) rotate(-6deg); }
+    }
+
+    .brand-text h1 {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, var(--neon-cyan), #ffffff, var(--neon-green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0;
+    }
+
+    .brand-text p {
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      margin: 0;
+    }
+
+    /* Status indicator pill */
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(0, 245, 255, 0.3);
+      border-radius: 999px;
+      padding: 7px 16px;
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: var(--neon-cyan);
+      box-shadow: 0 0 16px rgba(0, 245, 255, 0.15);
+      transition: all 0.3s ease;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--neon-cyan);
+      box-shadow: 0 0 8px var(--neon-cyan);
+      animation: pulseGlow 1.5s infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* Top HUD Actions */
+    .top-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--panel-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--panel-border);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: var(--shadow-panel);
+    }
+
+    .icon-btn:hover {
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+      box-shadow: 0 0 16px rgba(0, 245, 255, 0.35);
+      transform: translateY(-2px);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.92);
+    }
+
+    .icon-btn.active {
+      border-color: var(--neon-cyan);
+      background: rgba(0, 245, 255, 0.18);
+      color: var(--neon-cyan);
+    }
+
+    /* ==========================================================================
+       FLOATING GLASSMORPHIC CONTROL PANEL (COLLAPSIBLE / DOCKABLE)
+       ========================================================================== */
+    .control-dock {
+      position: absolute;
+      top: 68px;
+      left: 16px;
+      width: 360px;
+      max-height: calc(100vh - 86px);
+      z-index: 20;
+      background: var(--panel-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-panel);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    }
+
+    .control-dock.collapsed {
+      transform: translateX(-400px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .dock-header {
+      padding: 14px 18px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dock-title {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--neon-cyan);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-count {
+      background: rgba(0, 245, 255, 0.15);
+      color: var(--neon-cyan);
+      border: 1px solid rgba(0, 245, 255, 0.35);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-body);
+    }
+
+    .dock-content {
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: calc(100vh - 150px);
+    }
+
+    /* Custom Scrollbar */
+    .dock-content::-webkit-scrollbar {
+      width: 5px;
+    }
+    .dock-content::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .dock-content::-webkit-scrollbar-thumb {
+      background: rgba(0, 245, 255, 0.3);
+      border-radius: 4px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Textarea for Names */
+    .names-input-wrap {
+      position: relative;
+    }
+
+    .names-textarea {
+      width: 100%;
+      height: 105px;
+      background: rgba(5, 8, 22, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 13px;
+      line-height: 1.4;
+      resize: vertical;
+      outline: none;
+      transition: all 0.2s ease;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .names-textarea:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 12px rgba(0, 245, 255, 0.25);
+    }
+
+    /* Presets Buttons Bar */
+    .presets-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .preset-chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      padding: 4px 10px;
+      color: var(--text-muted);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: var(--font-body);
+    }
+
+    .preset-chip:hover {
+      background: rgba(0, 245, 255, 0.12);
+      border-color: var(--neon-cyan);
+      color: #fff;
+    }
+
+    /* Settings Box */
+    .settings-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(5, 8, 22, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-md);
+      padding: 12px;
+    }
+
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .setting-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .setting-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .setting-desc {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Stepper for Pick Count */
+    .stepper {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .stepper-btn {
+      width: 30px;
+      height: 28px;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+
+    .stepper-btn:hover {
+      background: rgba(0, 245, 255, 0.2);
+      color: var(--neon-cyan);
+    }
+
+    .stepper-val {
+      min-width: 30px;
+      text-align: center;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 12px;
+      color: var(--neon-cyan);
+    }
+
+    /* Switch Toggle */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.15);
+      transition: .3s;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--neon-green);
+      box-shadow: 0 0 10px rgba(57, 255, 20, 0.4);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Action Buttons Area */
+    .action-hub {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .btn-abduct {
+      position: relative;
+      width: 100%;
+      height: 52px;
+      border: none;
+      outline: none;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #00f5ff 0%, #0099ff 50%, #39ff14 100%);
+      background-size: 200% 200%;
+      color: #030814;
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 0 24px rgba(0, 245, 255, 0.5), 0 4px 15px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      overflow: hidden;
+    }
+
+    .btn-abduct::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.4) 50%,
+        transparent 70%
+      );
+      transform: rotate(45deg) translateX(-100%);
+      animation: buttonShine 4s infinite;
+    }
+
+    @keyframes buttonShine {
+      0% { transform: rotate(45deg) translateX(-100%); }
+      20%, 100% { transform: rotate(45deg) translateX(100%); }
+    }
+
+    .btn-abduct:hover:not(:disabled) {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 0 32px rgba(0, 245, 255, 0.7), 0 8px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-abduct:active:not(:disabled) {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .btn-abduct:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      filter: grayscale(0.5);
+      animation: none;
+    }
+
+    .secondary-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: var(--radius-sm);
+      padding: 9px;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-secondary:active:not(:disabled) {
+      transform: scale(0.96);
+    }
+
+    /* Floating Quick Bar for Cinema Mode when Panel is collapsed */
+    .quick-dock {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--panel-border);
+      border-radius: 999px;
+      padding: 8px 14px;
+      box-shadow: var(--shadow-panel);
+    }
+
+    .quick-abduct-btn {
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green));
+      color: #030814;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 24px;
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 0 20px rgba(0, 245, 255, 0.4);
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .quick-abduct-btn:hover:not(:disabled) {
+      transform: translateY(-2px) scale(1.04);
+      box-shadow: 0 0 28px rgba(0, 245, 255, 0.6);
+    }
+
+    .quick-abduct-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ==========================================================================
+       ABDUCTION RESULTS MODAL (HOLOGRAPHIC TRANSMISSION WINDOW)
+       ========================================================================== */
+    .modal-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(3, 6, 18, 0.75);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .hologram-card {
+      width: 90%;
+      max-width: 460px;
+      background: rgba(10, 16, 36, 0.92);
+      border: 1px solid var(--neon-cyan);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 0 50px rgba(0, 245, 255, 0.35), inset 0 0 20px rgba(0, 245, 255, 0.15);
+      padding: 26px 24px;
+      text-align: center;
+      position: relative;
+      transform: translateY(30px) scale(0.92);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      overflow: hidden;
+    }
+
+    .modal-backdrop.open .hologram-card {
+      transform: translateY(0) scale(1);
+    }
+
+    /* Hologram scanlines effect */
+    .hologram-card::after {
+      content: " ";
+      display: block;
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.04));
+      z-index: 2;
+      background-size: 100% 3px, 6px 100%;
+      pointer-events: none;
+      opacity: 0.8;
+    }
+
+    .holo-header {
+      position: relative;
+      z-index: 3;
+      margin-bottom: 20px;
+    }
+
+    .holo-saucer {
+      font-size: 48px;
+      filter: drop-shadow(0 0 16px var(--neon-cyan));
+      display: inline-block;
+      animation: floatUfo 2s infinite ease-in-out;
+    }
+
+    .holo-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: var(--neon-cyan);
+      margin-top: 10px;
+      text-transform: uppercase;
+      text-shadow: 0 0 10px rgba(0, 245, 255, 0.6);
+    }
+
+    .holo-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .victim-cards-container {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 240px;
+      overflow-y: auto;
+      margin: 16px 0 24px;
+      padding: 4px;
+    }
+
+    .victim-pill {
+      background: linear-gradient(90deg, rgba(0, 245, 255, 0.15), rgba(57, 255, 20, 0.15));
+      border: 1px solid rgba(0, 245, 255, 0.4);
+      border-radius: var(--radius-md);
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      animation: popVictim 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+
+    @keyframes popVictim {
+      0% { opacity: 0; transform: scale(0.7) translateY(10px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .victim-name {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 1px;
+      text-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+    }
+
+    .victim-badge {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255, 0, 127, 0.2);
+      color: var(--neon-magenta);
+      border: 1px solid rgba(255, 0, 127, 0.5);
+    }
+
+    .holo-actions {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-holo-primary {
+      flex: 1;
+      height: 44px;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+      border: none;
+      border-radius: var(--radius-sm);
+      color: #040814;
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 0 16px rgba(0, 245, 255, 0.4);
+      transition: all 0.2s;
+    }
+
+    .btn-holo-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 24px rgba(0, 245, 255, 0.6);
+    }
+
+    .btn-holo-secondary {
+      height: 44px;
+      padding: 0 16px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-sm);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-holo-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* ==========================================================================
+       HISTORY DRAWER
+       ========================================================================== */
+    .history-drawer {
+      position: absolute;
+      top: 68px;
+      right: 16px;
+      width: 320px;
+      max-height: calc(100vh - 86px);
+      z-index: 25;
+      background: var(--panel-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-panel);
+      display: flex;
+      flex-direction: column;
+      transform: translateX(360px);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .history-drawer.open {
+      transform: translateX(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .history-list {
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: calc(100vh - 160px);
+    }
+
+    .history-item {
+      background: rgba(5, 8, 22, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+    }
+
+    .history-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .history-names {
+      font-weight: 700;
+      color: var(--neon-cyan);
+      font-size: 13px;
+    }
+
+    /* Help Modal / Instructions */
+    .help-modal {
+      display: none;
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(4, 7, 20, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 110;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .help-modal.open {
+      display: flex;
+    }
+
+    .help-content {
+      background: rgba(12, 18, 38, 0.95);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      max-width: 440px;
+      box-shadow: var(--shadow-panel);
+    }
+
+    .help-content h2 {
+      font-family: var(--font-display);
+      font-size: 16px;
+      color: var(--neon-cyan);
+      margin-bottom: 12px;
+    }
+
+    .help-content ul {
+      list-style-type: disc;
+      padding-left: 20px;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .help-content li strong {
+      color: #fff;
+    }
+
+    /* Mobile Adaptations */
+    @media (max-width: 768px) {
+      .control-dock {
+        width: calc(100% - 32px);
+        max-height: 70vh;
+      }
+      .history-drawer {
+        width: calc(100% - 32px);
+      }
+      .brand-text h1 {
+        font-size: 12px;
+      }
+      .status-badge {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fullscreen WebGL/Canvas Layer -->
+  <canvas id="world-canvas"></canvas>
+  <div class="cinematic-vignette"></div>
+
+  <!-- Top HUD Bar -->
+  <header class="top-hud">
+    <div class="brand-pill">
+      <span class="brand-icon">🛸</span>
+      <div class="brand-text">
+        <h1>UFO Name Picker</h1>
+        <p>Alien Abduction Telemetry System</p>
+      </div>
+    </div>
+
+    <div class="status-badge" id="hud-status-badge">
+      <div class="status-dot"></div>
+      <span id="hud-status-text">PATROLLING EARTH SECTOR</span>
+    </div>
+
+    <div class="top-actions">
+      <button class="icon-btn" id="btn-sound-toggle" title="Toggle Sound (Mute/Unmute)">🔊</button>
+      <button class="icon-btn" id="btn-history-toggle" title="Abduction History Log">📜</button>
+      <button class="icon-btn" id="btn-help-toggle" title="Mission Guide">❓</button>
+      <button class="icon-btn active" id="btn-dock-toggle" title="Toggle Controls Deck">⚙️</button>
+    </div>
+  </header>
+
+  <!-- Floating Main Control Deck -->
+  <aside class="control-dock" id="control-dock">
+    <div class="dock-header">
+      <div class="dock-title">
+        <span>🛸 Mothership Beam Deck</span>
+        <span class="badge-count" id="active-count-badge">12 Candidates</span>
+      </div>
+      <button class="icon-btn" id="btn-dock-close" style="width: 28px; height: 28px; font-size: 12px;">✕</button>
+    </div>
+
+    <div class="dock-content">
+      <!-- Candidate Names Area -->
+      <div class="names-input-wrap">
+        <div class="section-label">
+          <span>Target Candidates</span>
+          <span style="font-size: 10px; color: var(--neon-cyan);">Comma or Enter separated</span>
+        </div>
+        <textarea
+          class="names-textarea"
+          id="names-input"
+          placeholder="Enter names here... e.g. Alice, Bob, Charlie"
+          spellcheck="false"
+        ></textarea>
+
+        <div class="presets-row">
+          <button class="preset-chip" data-preset="scifi">🚀 Sci-Fi Squad</button>
+          <button class="preset-chip" data-preset="office">💼 Office Crew</button>
+          <button class="preset-chip" data-preset="anime">⚡ Anime Heroes</button>
+          <button class="preset-chip" data-preset="animals">🐾 Cute Animals</button>
+          <button class="preset-chip" data-preset="clear" style="color: #ff5c5c;">🧹 Clear</button>
+        </div>
+      </div>
+
+      <!-- Abduction Settings -->
+      <div class="settings-grid">
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-title">Specimens to Abduct</span>
+            <span class="setting-desc">Number of targets locked at once</span>
+          </div>
+          <div class="stepper">
+            <button class="stepper-btn" id="stepper-minus">-</button>
+            <span class="stepper-val" id="stepper-count">1</span>
+            <button class="stepper-btn" id="stepper-plus">+</button>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-title">Exclude Abducted</span>
+            <span class="setting-desc">Remove victim from pool after pickup</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-exclude" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-title">Scan Suspense Level</span>
+            <span class="setting-desc">Searchlight hunting duration</span>
+          </div>
+          <div class="stepper">
+            <button class="stepper-btn" id="btn-speed-toggle" style="width: auto; padding: 0 10px; font-size: 11px;">⚡ NORMAL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button Hub -->
+      <div class="action-hub">
+        <button class="btn-abduct" id="btn-start-abduct">
+          <span>🚀 ABDUCT CANDIDATES</span>
+        </button>
+
+        <div class="secondary-btns">
+          <button class="btn-secondary" id="btn-sync-names">
+            <span>✨ Sync Field</span>
+          </button>
+          <button class="btn-secondary" id="btn-reset-field">
+            <span>🔄 Reset Earth</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Quick Floating Action Bar (Shown when control deck is collapsed) -->
+  <div class="quick-dock" id="quick-dock" style="display: none;">
+    <button class="quick-abduct-btn" id="quick-abduct-btn">
+      <span>🚀 ABDUCT SPECIMEN</span>
+    </button>
+    <button class="icon-btn" id="quick-show-panel" title="Open Settings Deck" style="width: 36px; height: 36px;">⚙️</button>
+  </div>
+
+  <!-- Abduction Result Hologram Modal -->
+  <div class="modal-backdrop" id="result-modal">
+    <div class="hologram-card">
+      <div class="holo-header">
+        <div class="holo-saucer">🛸</div>
+        <h2 class="holo-title">SPECIMEN SECURED!</h2>
+        <p class="holo-subtitle">Acquired for Galactic Analysis & Examination</p>
+      </div>
+
+      <div class="victim-cards-container" id="modal-victims-list">
+        <!-- Injected dynamically -->
+      </div>
+
+      <div class="holo-actions">
+        <button class="btn-holo-primary" id="btn-modal-close">🎉 ACKNOWLEDGE SPECIMEN</button>
+        <button class="btn-holo-secondary" id="btn-modal-beam-back" title="Return this specimen to Earth">⬇️ BEAM BACK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Drawer -->
+  <aside class="history-drawer" id="history-drawer">
+    <div class="dock-header">
+      <div class="dock-title">
+        <span>📜 Abduction Archive</span>
+      </div>
+      <button class="icon-btn" id="btn-history-close" style="width: 28px; height: 28px; font-size: 12px;">✕</button>
+    </div>
+    <div class="history-list" id="history-list-items">
+      <p style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 12px;">No specimens abducted yet.</p>
+    </div>
+  </aside>
+
+  <!-- Help & Guide Modal -->
+  <div class="help-modal" id="help-modal">
+    <div class="help-content">
+      <h2>🛸 Mothership Operation Guide</h2>
+      <ul>
+        <li><strong>Step 1:</strong> Enter candidate names or choose a preset squad from the deck.</li>
+        <li><strong>Step 2:</strong> Select how many victims to abduct simultaneously.</li>
+        <li><strong>Step 3:</strong> Hit <strong>"ABDUCT CANDIDATES"</strong> and enjoy the cinematic suspense!</li>
+        <li><strong>Watch:</strong> The UFO sweeps with high-intensity spotlights, panic sweeps across the chibi crowd, and tractor beam locks onto the lucky winner!</li>
+        <li><strong>Audio:</strong> Fully procedural 8-bit / sci-fi Web Audio synthesizer requires zero external downloads!</li>
+      </ul>
+      <button class="btn-holo-primary" id="btn-help-close" style="width: 100%;">Understood, Captain!</button>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODULAR JAVASCRIPT ENGINE: SOUND, CANVAS, PHYSICS, CHIBI & UFO LOGIC
+       ========================================================================== -->
+  <script>
+    /* ==========================================================================
+       1. SOUND CONTROLLER (Pure Procedural Web Audio API Synthesizer)
+       ========================================================================== */
+    class SoundController {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+        this.masterGain = null;
+        this.ufoHumOsc1 = null;
+        this.ufoHumOsc2 = null;
+        this.ufoHumGain = null;
+        this.ufoFilter = null;
+        this.ufoLfo = null;
+        this.isHumming = false;
+        this.beamOsc = null;
+        this.beamGain = null;
+      }
+
+      init() {
+        if (this.ctx) return;
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        this.ctx = new AudioCtx();
+
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+        this.masterGain.connect(this.ctx.destination);
+      }
+
+      ensureActive() {
+        if (!this.ctx) this.init();
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      toggleMute() {
+        this.muted = !this.muted;
+        if (this.masterGain && this.ctx) {
+          this.masterGain.gain.setValueAtTime(this.muted ? 0 : 0.4, this.ctx.currentTime);
+        }
+        return this.muted;
+      }
+
+      // Continuous Background Saucer Low Thrum / Hum
+      startUfoHum() {
+        this.ensureActive();
+        if (!this.ctx || this.isHumming || this.muted) return;
+
+        try {
+          const t = this.ctx.currentTime;
+          this.ufoHumOsc1 = this.ctx.createOscillator();
+          this.ufoHumOsc2 = this.ctx.createOscillator();
+          this.ufoHumOsc1.type = 'sawtooth';
+          this.ufoHumOsc2.type = 'sine';
+          this.ufoHumOsc1.frequency.setValueAtTime(65, t);
+          this.ufoHumOsc2.frequency.setValueAtTime(67.5, t); // beating effect
+
+          this.ufoFilter = this.ctx.createBiquadFilter();
+          this.ufoFilter.type = 'lowpass';
+          this.ufoFilter.frequency.setValueAtTime(280, t);
+
+          // LFO to modulate filter
+          this.ufoLfo = this.ctx.createOscillator();
+          const lfoGain = this.ctx.createGain();
+          this.ufoLfo.frequency.setValueAtTime(1.2, t);
+          lfoGain.gain.setValueAtTime(70, t);
+          this.ufoLfo.connect(this.ufoFilter.frequency);
+          this.ufoLfo.start();
+
+          this.ufoHumGain = this.ctx.createGain();
+          this.ufoHumGain.gain.setValueAtTime(0.01, t);
+          this.ufoHumGain.gain.linearRampToValueAtTime(0.12, t + 1.5);
+
+          this.ufoHumOsc1.connect(this.ufoFilter);
+          this.ufoHumOsc2.connect(this.ufoFilter);
+          this.ufoFilter.connect(this.ufoHumGain);
+          this.ufoHumGain.connect(this.masterGain);
+
+          this.ufoHumOsc1.start();
+          this.ufoHumOsc2.start();
+          this.isHumming = true;
+        } catch (e) {
+          console.warn('Audio hum error:', e);
+        }
+      }
+
+      // Dynamic UFO Engine Rev (pitch up when swooping fast)
+      setUfoPitch(speedNorm) {
+        if (!this.ctx || !this.isHumming) return;
+        const targetFreq = 65 + Math.min(speedNorm * 60, 90);
+        this.ufoHumOsc1?.frequency.setTargetAtTime(targetFreq, this.ctx.currentTime, 0.1);
+        this.ufoHumOsc2?.frequency.setTargetAtTime(targetFreq + 2.5, this.ctx.currentTime, 0.1);
+      }
+
+      // Radar / Sonar Searchlight Beep
+      playScanBeep(pitchMod = 1) {
+        this.ensureActive();
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        const freq = 1200 * pitchMod;
+        osc.frequency.setValueAtTime(freq, t);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.65, t + 0.12);
+
+        gain.gain.setValueAtTime(0.18, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.16);
+      }
+
+      // Menacing Target Lock Siren
+      playTargetLock() {
+        this.ensureActive();
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime;
+
+        [0, 0.08, 0.16].forEach((delay, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(880 + idx * 300, t + delay);
+
+          gain.gain.setValueAtTime(0.2, t + delay);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.07);
+
+          osc.connect(gain);
+          gain.connect(this.masterGain);
+          osc.start(t + delay);
+          osc.stop(t + delay + 0.08);
+        });
+      }
+
+      // Tractor Beam Charge & Laser Whine
+      playTractorBeamEngage() {
+        this.ensureActive();
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime;
+
+        // Rising sub-sweep
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, t);
+        osc.frequency.exponentialRampToValueAtTime(880, t + 0.6);
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(450, t);
+        filter.Q.setValueAtTime(4, t);
+
+        gain.gain.setValueAtTime(0.01, t);
+        gain.gain.linearRampToValueAtTime(0.3, t + 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.08, t + 0.8);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.85);
+
+        // Continuous beam buzz during levitation
+        this.startBeamLoop();
+      }
+
+      startBeamLoop() {
+        if (!this.ctx || this.beamOsc || this.muted) return;
+        const t = this.ctx.currentTime;
+        this.beamOsc = this.ctx.createOscillator();
+        this.beamGain = this.ctx.createGain();
+
+        this.beamOsc.type = 'triangle';
+        this.beamOsc.frequency.setValueAtTime(320, t);
+
+        // Sub modulation for alien buzz
+        const lfo = this.ctx.createOscillator();
+        const lfoGain = this.ctx.createGain();
+        lfo.frequency.setValueAtTime(24, t);
+        lfoGain.gain.setValueAtTime(60, t);
+        lfo.connect(this.beamOsc.frequency);
+        lfo.start();
+
+        this.beamGain.gain.setValueAtTime(0.01, t);
+        this.beamGain.gain.linearRampToValueAtTime(0.18, t + 0.2);
+
+        this.beamOsc.connect(this.beamGain);
+        this.beamGain.connect(this.masterGain);
+        this.beamOsc.start();
+      }
+
+      stopBeamLoop() {
+        if (!this.ctx || !this.beamOsc) return;
+        const t = this.ctx.currentTime;
+        this.beamGain?.gain.linearRampToValueAtTime(0.001, t + 0.2);
+        setTimeout(() => {
+          this.beamOsc?.stop();
+          this.beamOsc?.disconnect();
+          this.beamOsc = null;
+        }, 220);
+      }
+
+      // Cartoon Cork Pop / Squeak when victim enters the saucer
+      playComicalPop() {
+        this.ensureActive();
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime;
+
+        // Pitch slide down (pop)
+        const popOsc = this.ctx.createOscillator();
+        const popGain = this.ctx.createGain();
+        popOsc.type = 'sine';
+        popOsc.frequency.setValueAtTime(900, t);
+        popOsc.frequency.exponentialRampToValueAtTime(80, t + 0.08);
+
+        popGain.gain.setValueAtTime(0.35, t);
+        popGain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+
+        popOsc.connect(popGain);
+        popGain.connect(this.masterGain);
+        popOsc.start(t);
+        popOsc.stop(t + 0.1);
+
+        // High comical squeak
+        const squeakOsc = this.ctx.createOscillator();
+        const squeakGain = this.ctx.createGain();
+        squeakOsc.type = 'triangle';
+        squeakOsc.frequency.setValueAtTime(1400, t + 0.04);
+        squeakOsc.frequency.exponentialRampToValueAtTime(2200, t + 0.16);
+
+        squeakGain.gain.setValueAtTime(0.01, t + 0.04);
+        squeakGain.gain.linearRampToValueAtTime(0.25, t + 0.08);
+        squeakGain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+
+        squeakOsc.connect(squeakGain);
+        squeakGain.connect(this.masterGain);
+        squeakOsc.start(t + 0.04);
+        squeakOsc.stop(t + 0.22);
+      }
+
+      // Comic Relief Sigh & Relaxing Harp Chime for Survivors
+      playReliefChime() {
+        this.ensureActive();
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime;
+        const chord = [523.25, 659.25, 783.99, 1046.50]; // C Major Pentatonic
+
+        chord.forEach((freq, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, t + i * 0.09);
+
+          gain.gain.setValueAtTime(0.01, t + i * 0.09);
+          gain.gain.linearRampToValueAtTime(0.16, t + i * 0.09 + 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.09 + 0.7);
+
+          osc.connect(gain);
+          gain.connect(this.masterGain);
+          osc.start(t + i * 0.09);
+          osc.stop(t + i * 0.09 + 0.75);
+        });
+      }
+
+      // UI Click Sound
+      playClick() {
+        this.ensureActive();
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(950, t);
+        osc.frequency.exponentialRampToValueAtTime(450, t + 0.04);
+
+        gain.gain.setValueAtTime(0.12, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.05);
+      }
+    }
+
+    /* ==========================================================================
+       2. PARTICLE SYSTEM (Stars, Beam Rings, Confetti, Sparks, Sweatdrops)
+       ========================================================================== */
+    class ParticleSystem {
+      constructor() {
+        this.stars = [];
+        this.shootingStars = [];
+        this.fireflies = [];
+        this.beamParticles = [];
+        this.confetti = [];
+        this.sweatDrops = [];
+        this.speechBubbles = [];
+        this.lastShootingStar = 0;
+      }
+
+      init(width, height) {
+        this.stars = [];
+        const starCount = Math.floor((width * height) / 8000);
+        for (let i = 0; i < starCount; i++) {
+          this.stars.push({
+            x: Math.random() * width,
+            y: Math.random() * (height * 0.7),
+            size: Math.random() * 1.8 + 0.5,
+            alpha: Math.random() * 0.8 + 0.2,
+            twinkleSpeed: Math.random() * 2 + 1,
+            phase: Math.random() * Math.PI * 2,
+            color: Math.random() > 0.8 ? '#80d4ff' : (Math.random() > 0.6 ? '#ffeaa7' : '#ffffff')
+          });
+        }
+
+        // Fireflies on the hills
+        this.fireflies = [];
+        for (let i = 0; i < 22; i++) {
+          this.fireflies.push({
+            x: Math.random() * width,
+            y: height * 0.7 + Math.random() * (height * 0.25),
+            vx: (Math.random() - 0.5) * 15,
+            vy: (Math.random() - 0.5) * 12,
+            radius: Math.random() * 2 + 1.5,
+            phase: Math.random() * Math.PI * 2
+          });
+        }
+      }
+
+      spawnShootingStar(width, height) {
+        this.shootingStars.push({
+          x: Math.random() * width * 0.8,
+          y: Math.random() * (height * 0.35),
+          vx: Math.random() * 400 + 400,
+          vy: Math.random() * 200 + 150,
+          length: Math.random() * 90 + 70,
+          alpha: 1,
+          decay: Math.random() * 0.8 + 0.8
+        });
+      }
+
+      spawnConfetti(x, y, count = 100) {
+        const colors = ['#00f5ff', '#39ff14', '#ff007f', '#ffb703', '#9d4edd', '#ffffff', '#fffa65'];
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = Math.random() * 450 + 100;
+          this.confetti.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 150,
+            gravity: 420,
+            size: Math.random() * 9 + 5,
+            aspect: Math.random() * 0.8 + 0.3,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            rotation: Math.random() * Math.PI * 2,
+            vRot: (Math.random() - 0.5) * 12,
+            alpha: 1,
+            life: Math.random() * 2.5 + 2
+          });
+        }
+      }
+
+      spawnSweatDrop(x, y) {
+        this.sweatDrops.push({
+          x: x + (Math.random() - 0.5) * 16,
+          y: y,
+          vy: -Math.random() * 50 - 40,
+          vx: (Math.random() - 0.5) * 40,
+          gravity: 280,
+          alpha: 1,
+          size: Math.random() * 4 + 4,
+          life: 0.8
+        });
+      }
+
+      spawnSpeechBubble(x, y, text) {
+        this.speechBubbles.push({
+          x: x,
+          y: y,
+          text: text,
+          vy: -20,
+          alpha: 1,
+          life: 2.2
+        });
+      }
+
+      spawnBeamParticle(sourceX, sourceY, targetY) {
+        this.beamParticles.push({
+          x: sourceX + (Math.random() - 0.5) * 50,
+          y: targetY - Math.random() * 20,
+          vy: -Math.random() * 320 - 180,
+          vx: (Math.random() - 0.5) * 30,
+          radius: Math.random() * 3 + 1.5,
+          alpha: 1,
+          maxY: sourceY
+        });
+      }
+
+      update(dt, width, height) {
+        const now = performance.now();
+        if (now - this.lastShootingStar > 8000 + Math.random() * 6000) {
+          this.spawnShootingStar(width, height);
+          this.lastShootingStar = now;
+        }
+
+        // Shooting stars update
+        for (let i = this.shootingStars.length - 1; i >= 0; i--) {
+          const s = this.shootingStars[i];
+          s.x += s.vx * dt;
+          s.y += s.vy * dt;
+          s.alpha -= s.decay * dt;
+          if (s.alpha <= 0 || s.x > width || s.y > height) {
+            this.shootingStars.splice(i, 1);
+          }
+        }
+
+        // Fireflies
+        this.fireflies.forEach(f => {
+          f.x += f.vx * dt;
+          f.y += f.vy * dt;
+          f.phase += dt * 3;
+          if (f.x < 0) f.x = width;
+          if (f.x > width) f.x = 0;
+          if (f.y < height * 0.65) f.y = height * 0.65;
+          if (f.y > height * 0.95) f.y = height * 0.95;
+        });
+
+        // Beam motes
+        for (let i = this.beamParticles.length - 1; i >= 0; i--) {
+          const p = this.beamParticles[i];
+          p.y += p.vy * dt;
+          p.x += p.vx * dt;
+          p.alpha -= dt * 1.1;
+          if (p.alpha <= 0 || p.y <= p.maxY) {
+            this.beamParticles.splice(i, 1);
+          }
+        }
+
+        // Confetti
+        for (let i = this.confetti.length - 1; i >= 0; i--) {
+          const c = this.confetti[i];
+          c.vy += c.gravity * dt;
+          c.x += c.vx * dt;
+          c.y += c.vy * dt;
+          c.rotation += c.vRot * dt;
+          c.life -= dt;
+          if (c.life < 1) c.alpha = c.life;
+          if (c.life <= 0 || c.y > height + 20) {
+            this.confetti.splice(i, 1);
+          }
+        }
+
+        // Sweat drops
+        for (let i = this.sweatDrops.length - 1; i >= 0; i--) {
+          const d = this.sweatDrops[i];
+          d.vy += d.gravity * dt;
+          d.x += d.vx * dt;
+          d.y += d.vy * dt;
+          d.life -= dt;
+          d.alpha = Math.max(0, d.life / 0.8);
+          if (d.life <= 0) this.sweatDrops.splice(i, 1);
+        }
+
+        // Speech bubbles
+        for (let i = this.speechBubbles.length - 1; i >= 0; i--) {
+          const b = this.speechBubbles[i];
+          b.y += b.vy * dt;
+          b.life -= dt;
+          if (b.life < 0.6) b.alpha = b.life / 0.6;
+          if (b.life <= 0) this.speechBubbles.splice(i, 1);
+        }
+      }
+
+      drawStars(ctx, time) {
+        ctx.save();
+        this.stars.forEach(s => {
+          const flicker = Math.sin(time * s.twinkleSpeed + s.phase) * 0.35 + 0.65;
+          ctx.fillStyle = s.color;
+          ctx.globalAlpha = s.alpha * flicker;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // Shooting stars
+        this.shootingStars.forEach(s => {
+          ctx.save();
+          ctx.strokeStyle = `rgba(255, 255, 255, ${s.alpha})`;
+          ctx.lineWidth = 2;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(s.x, s.y);
+          const angle = Math.atan2(s.vy, s.vx);
+          ctx.lineTo(s.x - Math.cos(angle) * s.length, s.y - Math.sin(angle) * s.length);
+          ctx.stroke();
+          ctx.restore();
+        });
+        ctx.restore();
+      }
+
+      drawFireflies(ctx, time) {
+        ctx.save();
+        this.fireflies.forEach(f => {
+          const glow = (Math.sin(f.phase) + 1) * 0.5;
+          ctx.fillStyle = `rgba(180, 255, 80, ${glow * 0.7 + 0.15})`;
+          ctx.shadowColor = '#a8ff35';
+          ctx.shadowBlur = 8;
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.restore();
+      }
+
+      drawParticles(ctx) {
+        ctx.save();
+        // Beam particles
+        ctx.fillStyle = '#00f5ff';
+        ctx.shadowColor = '#00f5ff';
+        ctx.shadowBlur = 10;
+        this.beamParticles.forEach(p => {
+          ctx.globalAlpha = p.alpha;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // Sweat drops
+        ctx.shadowBlur = 0;
+        this.sweatDrops.forEach(d => {
+          ctx.globalAlpha = d.alpha;
+          ctx.fillStyle = '#00e5ff';
+          ctx.beginPath();
+          // Teardrop shape
+          ctx.arc(d.x, d.y, d.size * 0.7, 0, Math.PI);
+          ctx.lineTo(d.x, d.y - d.size * 1.3);
+          ctx.closePath();
+          ctx.fill();
+        });
+
+        // Confetti
+        this.confetti.forEach(c => {
+          ctx.save();
+          ctx.translate(c.x, c.y);
+          ctx.rotate(c.rotation);
+          ctx.globalAlpha = c.alpha;
+          ctx.fillStyle = c.color;
+          ctx.fillRect(-c.size / 2, -c.size * c.aspect / 2, c.size, c.size * c.aspect);
+          ctx.restore();
+        });
+
+        // Speech bubbles
+        this.speechBubbles.forEach(b => {
+          ctx.save();
+          ctx.globalAlpha = b.alpha;
+          ctx.font = '700 13px Fredoka, sans-serif';
+          const textW = ctx.measureText(b.text).width;
+          const padX = 10;
+          const padY = 6;
+          const boxW = textW + padX * 2;
+          const boxH = 26;
+
+          // Bubble background
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+          ctx.strokeStyle = '#00f5ff';
+          ctx.lineWidth = 1.5;
+          ctx.shadowColor = 'rgba(0,0,0,0.4)';
+          ctx.shadowBlur = 8;
+
+          ctx.beginPath();
+          ctx.roundRect(b.x - boxW / 2, b.y - boxH, boxW, boxH, 12);
+          ctx.fill();
+          ctx.stroke();
+
+          // Little beak pointing down
+          ctx.beginPath();
+          ctx.moveTo(b.x - 5, b.y);
+          ctx.lineTo(b.x, b.y + 6);
+          ctx.lineTo(b.x + 5, b.y);
+          ctx.fill();
+
+          // Text
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#0b132b';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(b.text, b.x, b.y - boxH / 2);
+          ctx.restore();
+        });
+
+        ctx.restore();
+      }
+    }
+
+    /* ==========================================================================
+       3. ENVIRONMENT ENGINE (Procedural Hills, Cows, Trees, Moon & Atmosphere)
+       ========================================================================== */
+    class Environment {
+      constructor() {
+        this.cows = [];
+      }
+
+      init(width, height) {
+        // Cute grazing cows on the distant midground hill!
+        this.cows = [
+          { x: width * 0.18, facing: 1, chewPhase: 0, tailPhase: 0 },
+          { x: width * 0.72, facing: -1, chewPhase: 1.5, tailPhase: 2 }
+        ];
+      }
+
+      getGroundY(x, width, height) {
+        // Foreground lush hill curve
+        const baseY = height * 0.81;
+        const curve1 = Math.sin((x / width) * Math.PI * 1.4 + 0.3) * (height * 0.05);
+        const curve2 = Math.cos((x / width) * Math.PI * 3.2) * (height * 0.02);
+        return baseY + curve1 + curve2;
+      }
+
+      getMidHillY(x, width, height) {
+        const baseY = height * 0.75;
+        return baseY + Math.sin((x / width) * Math.PI * 1.8 + 1.2) * (height * 0.045);
+      }
+
+      draw(ctx, width, height, time) {
+        // 1. Deep Cosmic Sky Gradient
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, height * 0.85);
+        skyGrad.addColorStop(0, '#040716');
+        skyGrad.addColorStop(0.35, '#0b112c');
+        skyGrad.addColorStop(0.7, '#151d45');
+        skyGrad.addColorStop(1, '#1b2a59');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, width, height);
+
+        // 2. Glowing Moon
+        const moonX = width * 0.85;
+        const moonY = height * 0.2;
+        const moonR = Math.min(width, height) * 0.07 + 25;
+
+        // Outer atmospheric lunar halo
+        const haloGrad = ctx.createRadialGradient(moonX, moonY, moonR * 0.8, moonX, moonY, moonR * 2.8);
+        haloGrad.addColorStop(0, 'rgba(180, 230, 255, 0.22)');
+        haloGrad.addColorStop(0.5, 'rgba(100, 180, 255, 0.08)');
+        haloGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = haloGrad;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, moonR * 2.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Moon Body
+        const moonBodyGrad = ctx.createRadialGradient(moonX - moonR * 0.3, moonY - moonR * 0.3, moonR * 0.1, moonX, moonY, moonR);
+        moonBodyGrad.addColorStop(0, '#ffffff');
+        moonBodyGrad.addColorStop(0.7, '#d8e5f8');
+        moonBodyGrad.addColorStop(1, '#a6b9da');
+        ctx.fillStyle = moonBodyGrad;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cute Craters
+        ctx.fillStyle = 'rgba(120, 140, 175, 0.28)';
+        [
+          { dx: -0.3, dy: -0.2, r: 0.22 },
+          { dx: 0.25, dy: 0.15, r: 0.28 },
+          { dx: -0.1, dy: 0.35, r: 0.16 },
+          { dx: 0.4, dy: -0.25, r: 0.14 }
+        ].forEach(c => {
+          ctx.beginPath();
+          ctx.arc(moonX + c.dx * moonR, moonY + c.dy * moonR, c.r * moonR, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // 3. Distant Mountain Silhouette
+        ctx.fillStyle = '#080d22';
+        ctx.beginPath();
+        ctx.moveTo(0, height * 0.72);
+        ctx.lineTo(width * 0.15, height * 0.63);
+        ctx.lineTo(width * 0.32, height * 0.69);
+        ctx.lineTo(width * 0.48, height * 0.61);
+        ctx.lineTo(width * 0.65, height * 0.67);
+        ctx.lineTo(width * 0.82, height * 0.59);
+        ctx.lineTo(width, height * 0.68);
+        ctx.lineTo(width, height);
+        ctx.lineTo(0, height);
+        ctx.closePath();
+        ctx.fill();
+
+        // 4. Midground Rolling Hill
+        const midGrad = ctx.createLinearGradient(0, height * 0.65, 0, height);
+        midGrad.addColorStop(0, '#0c1a36');
+        midGrad.addColorStop(1, '#0e2340');
+        ctx.fillStyle = midGrad;
+        ctx.beginPath();
+        ctx.moveTo(0, this.getMidHillY(0, width, height));
+        for (let x = 0; x <= width; x += 30) {
+          ctx.lineTo(x, this.getMidHillY(x, width, height));
+        }
+        ctx.lineTo(width, height);
+        ctx.lineTo(0, height);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw distant cute grazing cows!
+        this.drawCows(ctx, width, height, time);
+
+        // 5. Foreground Lush Hill
+        const foreGrad = ctx.createLinearGradient(0, height * 0.75, 0, height);
+        foreGrad.addColorStop(0, '#13354a');
+        foreGrad.addColorStop(0.4, '#0d283c');
+        foreGrad.addColorStop(1, '#071626');
+        ctx.fillStyle = foreGrad;
+        ctx.beginPath();
+        ctx.moveTo(0, this.getGroundY(0, width, height));
+        for (let x = 0; x <= width; x += 15) {
+          ctx.lineTo(x, this.getGroundY(x, width, height));
+        }
+        ctx.lineTo(width, height);
+        ctx.lineTo(0, height);
+        ctx.closePath();
+        ctx.fill();
+
+        // 6. Cute Swaying Grass Tufts along the hill
+        ctx.strokeStyle = '#1d546b';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        for (let x = 15; x < width; x += 45) {
+          const gy = this.getGroundY(x, width, height);
+          const sway = Math.sin(time * 2.5 + x * 0.05) * 5;
+          ctx.beginPath();
+          ctx.moveTo(x, gy);
+          ctx.quadraticCurveTo(x + sway, gy - 8, x + sway * 1.5, gy - 12);
+          ctx.moveTo(x - 4, gy + 1);
+          ctx.quadraticCurveTo(x - 4 + sway, gy - 6, x - 4 + sway * 1.2, gy - 9);
+          ctx.stroke();
+        }
+      }
+
+      drawCows(ctx, width, height, time) {
+        ctx.save();
+        this.cows.forEach(cow => {
+          const cx = cow.x;
+          const cy = this.getMidHillY(cx, width, height) + 1;
+          const scale = 0.65;
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.scale(cow.facing * scale, scale);
+
+          // Cow body (White with black spots)
+          ctx.fillStyle = '#eaf0f8';
+          ctx.beginPath();
+          ctx.roundRect(-24, -22, 34, 18, 6);
+          ctx.fill();
+
+          // Black patches
+          ctx.fillStyle = '#1b233a';
+          ctx.beginPath();
+          ctx.arc(-14, -16, 7, 0, Math.PI * 2);
+          ctx.arc(-2, -18, 5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Legs
+          ctx.fillStyle = '#d5dfec';
+          ctx.fillRect(-20, -5, 4, 10);
+          ctx.fillRect(-12, -5, 4, 10);
+          ctx.fillRect(2, -5, 4, 10);
+          ctx.fillRect(8, -5, 4, 10);
+
+          // Head (grazing up and down)
+          const chew = Math.sin(time * 3 + cow.chewPhase) * 2;
+          ctx.fillStyle = '#eaf0f8';
+          ctx.beginPath();
+          ctx.roundRect(10, -26 + chew, 14, 14, 4);
+          ctx.fill();
+
+          // Cute pink snout
+          ctx.fillStyle = '#ffb3c6';
+          ctx.beginPath();
+          ctx.roundRect(16, -20 + chew, 10, 8, 3);
+          ctx.fill();
+
+          // Tiny ears & horns
+          ctx.fillStyle = '#fff';
+          ctx.beginPath();
+          ctx.arc(12, -26 + chew, 3, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Tail wagging
+          const tailWag = Math.sin(time * 4 + cow.tailPhase) * 6;
+          ctx.strokeStyle = '#eaf0f8';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(-24, -18);
+          ctx.quadraticCurveTo(-30, -12, -30 + tailWag, -6);
+          ctx.stroke();
+
+          ctx.restore();
+        });
+        ctx.restore();
+      }
+    }
+
+    /* ==========================================================================
+       4. PROCEDURAL CHIBI CHARACTER
+       ========================================================================== */
+    class Character {
+      constructor(name, x, groundY) {
+        this.name = name;
+        this.x = x;
+        this.y = groundY;
+        this.groundY = groundY;
+        this.vx = (Math.random() - 0.5) * 35;
+        this.facing = Math.random() > 0.5 ? 1 : -1;
+        this.scaleX = this.facing;
+
+        // Personality & Styles (Seed from name hash)
+        const hash = this.hashName(name);
+        this.skinColor = ['#ffd6ba', '#ffe5d9', '#fcd5ce', '#e8b298', '#bb8565'][hash % 5];
+        this.hairColor = ['#3d2314', '#e6a15c', '#1b1b1b', '#ff4d6d', '#00b4d8', '#7b2cbf', '#52b788', '#f39c12'][Math.floor(hash / 5) % 8];
+        this.shirtColor = ['#ff477e', '#00f5ff', '#39ff14', '#ffb703', '#9d4edd', '#48cae4', '#ff758f'][Math.floor(hash / 13) % 7];
+        this.pantsColor = ['#1d2d44', '#3d5a80', '#293241', '#415a77'][hash % 4];
+        this.hairStyle = hash % 6; // 0: Spiky, 1: Bob cut, 2: Curly afro, 3: Ponytail, 4: Beanie/Cap, 5: Messy
+        this.accessory = (hash % 10 > 6) ? (hash % 3) : -1; // 0: glasses, 1: headphones, 2: blush stickers
+
+        // Animation States
+        this.state = 'IDLE'; // IDLE, NERVOUS, PANIC, TARGETED, ABDUCTED, RELIEVED
+        this.walkPhase = Math.random() * Math.PI * 2;
+        this.idleTimer = Math.random() * 4 + 2;
+        this.idleAction = 'STAND'; // STAND, PHONE, WAVE, BLINK
+        this.blinkTimer = Math.random() * 3 + 2;
+        this.isBlinking = false;
+
+        // Abduction physics
+        this.abductProgress = 0; // 0 to 1 as rising into UFO
+        this.abductSpin = 0;
+        this.abductStartY = groundY;
+        this.targetUfoY = 0;
+        this.sweatTimer = 0;
+        this.isAbducted = false;
+        this.reliefTimer = 0;
+      }
+
+      hashName(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          hash = (hash << 5) - hash + str.charCodeAt(i);
+          hash |= 0;
+        }
+        return Math.abs(hash);
+      }
+
+      update(dt, width, groundYResolver, ufo) {
+        if (this.isAbducted && this.state !== 'ABDUCTED') return;
+
+        // Sync with terrain elevation
+        this.groundY = groundYResolver(this.x);
+
+        // Blinking
+        this.blinkTimer -= dt;
+        if (this.blinkTimer <= 0) {
+          this.isBlinking = true;
+          setTimeout(() => { this.isBlinking = false; }, 140);
+          this.blinkTimer = Math.random() * 4 + 2.5;
+        }
+
+        // State Machine
+        switch (this.state) {
+          case 'IDLE':
+            this.y = this.groundY;
+            this.idleTimer -= dt;
+            if (this.idleTimer <= 0) {
+              if (Math.random() > 0.45) {
+                this.vx = (Math.random() - 0.5) * 45;
+                this.facing = this.vx > 0 ? 1 : -1;
+                this.idleAction = 'WALK';
+              } else {
+                this.vx = 0;
+                const actions = ['STAND', 'PHONE', 'WAVE', 'LOOKUP'];
+                this.idleAction = actions[Math.floor(Math.random() * actions.length)];
+              }
+              this.idleTimer = Math.random() * 3.5 + 2;
+            }
+
+            this.x += this.vx * dt;
+            if (this.vx !== 0) {
+              this.walkPhase += dt * 10;
+            }
+            break;
+
+          case 'NERVOUS':
+          case 'PANIC':
+            // Running around in comical terror!
+            this.y = this.groundY;
+            const panicSpeed = this.state === 'PANIC' ? 140 : 80;
+            this.x += this.facing * panicSpeed * dt;
+            this.walkPhase += dt * 20;
+
+            // Bounce off boundaries or randomly scramble directions
+            if (this.x < 50) { this.x = 50; this.facing = 1; }
+            if (this.x > width - 50) { this.x = width - 50; this.facing = -1; }
+            if (Math.random() < 0.02) this.facing *= -1;
+            break;
+
+          case 'TARGETED':
+            // Frozen in terror under the tractor beam!
+            this.y = this.groundY;
+            this.vx = 0;
+            this.walkPhase = 0;
+            break;
+
+          case 'ABDUCTED':
+            // Levitation into the tractor beam!
+            this.abductProgress += dt * 0.45; // ~2.2 seconds lift
+            this.y = this.abductStartY - (this.abductStartY - this.targetUfoY) * Math.min(this.abductProgress, 1);
+            if (ufo) this.x = ufo.x; // Keep strictly centered with UFO!
+            this.abductSpin += dt * 5;
+            this.walkPhase += dt * 25; // frantic kicking
+            break;
+
+          case 'RELIEVED':
+            // Safe on the ground, slumped in relief
+            this.y = this.groundY;
+            this.vx = 0;
+            this.reliefTimer += dt;
+            break;
+        }
+
+        // Clamp field bounds
+        if (this.state !== 'ABDUCTED') {
+          if (this.x < 40) { this.x = 40; this.vx = Math.abs(this.vx); this.facing = 1; }
+          if (this.x > width - 40) { this.x = width - 40; this.vx = -Math.abs(this.vx); this.facing = -1; }
+        }
+
+        // Smooth facing turn
+        this.scaleX += (this.facing - this.scaleX) * 12 * dt;
+      }
+
+      draw(ctx) {
+        if (this.isAbducted && this.abductProgress >= 1) return;
+
+        ctx.save();
+        const shiverX = (this.state === 'TARGETED') ? (Math.random() - 0.5) * 3 : 0;
+        ctx.translate(this.x + shiverX, this.y);
+
+        // Ground shadow
+        if (this.state !== 'ABDUCTED') {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 16, 5, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Shadow fades and shrinks as lifted
+          const shadowScale = Math.max(0.1, 1 - this.abductProgress);
+          ctx.fillStyle = `rgba(0, 245, 255, ${shadowScale * 0.5})`;
+          ctx.beginPath();
+          ctx.ellipse(0, (this.abductStartY - this.y), 20 * shadowScale, 6 * shadowScale, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Levitation Aura when abducting
+        if (this.state === 'ABDUCTED') {
+          ctx.save();
+          ctx.rotate(Math.sin(this.abductSpin) * 0.25);
+          ctx.fillStyle = 'rgba(0, 245, 255, 0.3)';
+          ctx.shadowColor = '#00f5ff';
+          ctx.shadowBlur = 15;
+          ctx.beginPath();
+          ctx.arc(0, -28, 30, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // Direction scale
+        ctx.scale(this.scaleX, 1);
+
+        // Procedural Body Parts
+        const isWalking = (this.state === 'IDLE' && this.vx !== 0) || this.state === 'NERVOUS' || this.state === 'PANIC' || this.state === 'ABDUCTED';
+        const legSwing = isWalking ? Math.sin(this.walkPhase) * 0.45 : 0;
+        const armSwing = isWalking ? -Math.sin(this.walkPhase) * 0.5 : 0;
+        const headBob = isWalking ? Math.abs(Math.sin(this.walkPhase)) * 3 : 0;
+
+        // Legs
+        ctx.fillStyle = this.pantsColor;
+        // Left Leg
+        ctx.save();
+        ctx.translate(-5, -12);
+        ctx.rotate(legSwing);
+        ctx.beginPath();
+        ctx.roundRect(-3, 0, 6, 13, 3);
+        ctx.fill();
+        // Shoes
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.roundRect(-3.5, 9, 8, 4, 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Right Leg
+        ctx.save();
+        ctx.translate(5, -12);
+        ctx.rotate(-legSwing);
+        ctx.fillStyle = this.pantsColor;
+        ctx.beginPath();
+        ctx.roundRect(-3, 0, 6, 13, 3);
+        ctx.fill();
+        // Shoes
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.roundRect(-3.5, 9, 8, 4, 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Torso / Shirt
+        ctx.fillStyle = this.shirtColor;
+        ctx.beginPath();
+        ctx.roundRect(-9, -27 - headBob * 0.5, 18, 16, 5);
+        ctx.fill();
+
+        // Left Arm (Back)
+        ctx.save();
+        ctx.translate(-9, -24 - headBob * 0.5);
+        if (this.state === 'ABDUCTED' || this.state === 'PANIC') {
+          // Cartoon flailing arms up!
+          ctx.rotate(-2.2 + Math.sin(this.walkPhase * 1.5) * 0.6);
+        } else if (this.state === 'RELIEVED') {
+          // Hand on grass
+          ctx.rotate(0.5);
+        } else {
+          ctx.rotate(armSwing);
+        }
+        ctx.fillStyle = this.shirtColor;
+        ctx.beginPath();
+        ctx.roundRect(-2.5, 0, 5, 12, 2.5);
+        ctx.fill();
+        // Little mitten hand
+        ctx.fillStyle = this.skinColor;
+        ctx.beginPath();
+        ctx.arc(0, 12, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Right Arm (Front)
+        ctx.save();
+        ctx.translate(9, -24 - headBob * 0.5);
+        if (this.state === 'ABDUCTED' || this.state === 'PANIC') {
+          ctx.rotate(2.2 - Math.sin(this.walkPhase * 1.5) * 0.6);
+        } else if (this.state === 'RELIEVED') {
+          // Wiping brow with forearm!
+          ctx.rotate(-1.8);
+        } else if (this.idleAction === 'PHONE') {
+          // Holding glowing smartphone
+          ctx.rotate(-1.4);
+        } else if (this.idleAction === 'WAVE') {
+          ctx.rotate(-2.1 + Math.sin(Date.now() * 0.01) * 0.4);
+        } else {
+          ctx.rotate(-armSwing);
+        }
+        ctx.fillStyle = this.shirtColor;
+        ctx.beginPath();
+        ctx.roundRect(-2.5, 0, 5, 12, 2.5);
+        ctx.fill();
+        // Hand
+        ctx.fillStyle = this.skinColor;
+        ctx.beginPath();
+        ctx.arc(0, 12, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // If holding phone
+        if (this.idleAction === 'PHONE' && this.state === 'IDLE') {
+          ctx.fillStyle = '#111';
+          ctx.fillRect(-2, 10, 6, 10);
+          ctx.fillStyle = '#00f5ff';
+          ctx.fillRect(-1, 11, 4, 8); // screen glow
+        }
+        ctx.restore();
+
+        // ==========================================
+        // CHIBI HEAD & FACIAL EXPRESSIONS
+        // ==========================================
+        ctx.save();
+        ctx.translate(0, -36 - headBob);
+
+        // Neck
+        ctx.fillStyle = this.skinColor;
+        ctx.fillRect(-3, 6, 6, 4);
+
+        // Head Circle
+        ctx.fillStyle = this.skinColor;
+        ctx.beginPath();
+        ctx.arc(0, 0, 16, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cheerful Blushing Cheeks
+        ctx.fillStyle = 'rgba(255, 90, 130, 0.45)';
+        ctx.beginPath();
+        ctx.arc(-8, 3, 3.5, 0, Math.PI * 2);
+        ctx.arc(8, 3, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Expressive Eyes Based on State
+        if (this.isBlinking) {
+          // Blink lines
+          ctx.strokeStyle = '#222';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(-9, 0); ctx.lineTo(-3, 0);
+          ctx.moveTo(3, 0); ctx.lineTo(9, 0);
+          ctx.stroke();
+        } else if (this.state === 'PANIC' || this.state === 'ABDUCTED') {
+          // Giant Cartoon Screaming Eyes (Spiral or big white circles)
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(-6, -1, 5.5, 0, Math.PI * 2);
+          ctx.arc(6, -1, 5.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#000000';
+          ctx.beginPath();
+          ctx.arc(-6, -1, 2, 0, Math.PI * 2);
+          ctx.arc(6, -1, 2, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Screaming open mouth
+          ctx.fillStyle = '#800f2f';
+          ctx.beginPath();
+          ctx.ellipse(0, 7, 4, 6, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (this.state === 'TARGETED') {
+          // Startled anime exclamation eyes looking up into beam
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(-6, -3, 6, 0, Math.PI * 2);
+          ctx.arc(6, -3, 6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ff0055';
+          ctx.beginPath();
+          ctx.arc(-6, -5, 2.5, 0, Math.PI * 2);
+          ctx.arc(6, -5, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Trembling mouth
+          ctx.strokeStyle = '#333';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(-4, 5);
+          ctx.lineTo(-2, 7);
+          ctx.lineTo(0, 5);
+          ctx.lineTo(2, 7);
+          ctx.lineTo(4, 5);
+          ctx.stroke();
+        } else if (this.state === 'RELIEVED') {
+          // Happy closed anime eyes (^ ^)
+          ctx.strokeStyle = '#222';
+          ctx.lineWidth = 2.2;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.arc(-6, 0, 4, Math.PI * 1.1, Math.PI * 1.9);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(6, 0, 4, Math.PI * 1.1, Math.PI * 1.9);
+          ctx.stroke();
+
+          // Cute smile
+          ctx.strokeStyle = '#222';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.arc(0, 4, 4, 0.2, Math.PI - 0.2);
+          ctx.stroke();
+        } else {
+          // Normal Cute Anime Eyes
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.ellipse(-6, -1, 4.5, 5.5, 0, 0, Math.PI * 2);
+          ctx.ellipse(6, -1, 4.5, 5.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Iris
+          ctx.fillStyle = '#1e293b';
+          ctx.beginPath();
+          ctx.arc(-5.5, -0.5, 3.2, 0, Math.PI * 2);
+          ctx.arc(6.5, -0.5, 3.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Glossy Anime Highlights
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(-6.5, -2, 1.5, 0, Math.PI * 2);
+          ctx.arc(5.5, -2, 1.5, 0, Math.PI * 2);
+          ctx.arc(-4.5, 1, 0.8, 0, Math.PI * 2);
+          ctx.arc(7.5, 1, 0.8, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Smile
+          ctx.strokeStyle = '#333';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(0, 4, 3, 0.1, Math.PI - 0.1);
+          ctx.stroke();
+        }
+
+        // Eyebrows
+        ctx.strokeStyle = this.hairColor;
+        ctx.lineWidth = 1.8;
+        ctx.lineCap = 'round';
+        if (this.state === 'PANIC' || this.state === 'TARGETED') {
+          // Angled up in fear (\ /)
+          ctx.beginPath();
+          ctx.moveTo(-9, -8); ctx.lineTo(-4, -6);
+          ctx.moveTo(9, -8); ctx.lineTo(4, -6);
+          ctx.stroke();
+        } else {
+          // Relaxed
+          ctx.beginPath();
+          ctx.moveTo(-9, -6); ctx.lineTo(-4, -7);
+          ctx.moveTo(9, -6); ctx.lineTo(4, -7);
+          ctx.stroke();
+        }
+
+        // ==========================================
+        // UNIQUE HAIR MODELS
+        // ==========================================
+        ctx.fillStyle = this.hairColor;
+        ctx.strokeStyle = this.hairColor;
+        switch (this.hairStyle) {
+          case 0: // Spiky anime hair
+            ctx.beginPath();
+            ctx.arc(0, -5, 16, Math.PI, 0);
+            ctx.lineTo(16, -14);
+            ctx.lineTo(10, -22);
+            ctx.lineTo(4, -16);
+            ctx.lineTo(0, -26);
+            ctx.lineTo(-4, -16);
+            ctx.lineTo(-10, -22);
+            ctx.lineTo(-16, -14);
+            ctx.closePath();
+            ctx.fill();
+            break;
+
+          case 1: // Cute bob cut with bangs
+            ctx.beginPath();
+            ctx.arc(0, -3, 17, Math.PI * 0.8, Math.PI * 0.2);
+            ctx.lineTo(17, 8);
+            ctx.lineTo(12, 10);
+            ctx.lineTo(10, -3);
+            ctx.lineTo(-10, -3);
+            ctx.lineTo(-12, 10);
+            ctx.lineTo(-17, 8);
+            ctx.closePath();
+            ctx.fill();
+            break;
+
+          case 2: // Fluffy curly afro
+            for (let a = 0; a < Math.PI * 2; a += 0.7) {
+              ctx.beginPath();
+              ctx.arc(Math.cos(a) * 16, Math.sin(a) * 16 - 6, 8, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            break;
+
+          case 3: // Ponytail
+            ctx.beginPath();
+            ctx.arc(0, -4, 16.5, Math.PI * 0.85, Math.PI * 0.15);
+            ctx.fill();
+            // Ponytail fluff behind
+            ctx.beginPath();
+            ctx.ellipse(-14, -12, 8, 14, 0.4, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+
+          case 4: // Cap / Beanie
+            ctx.fillStyle = '#00f5ff';
+            ctx.beginPath();
+            ctx.arc(0, -5, 17, Math.PI, 0);
+            ctx.fill();
+            // Cap brim
+            ctx.fillStyle = '#00b4d8';
+            ctx.beginPath();
+            ctx.roundRect(0, -6, 20, 5, 2);
+            ctx.fill();
+            break;
+
+          default: // Messy locks
+            ctx.beginPath();
+            ctx.arc(0, -5, 16.5, Math.PI * 0.85, Math.PI * 0.15);
+            ctx.lineTo(16, 2);
+            ctx.lineTo(12, -4);
+            ctx.lineTo(-12, -4);
+            ctx.lineTo(-16, 2);
+            ctx.closePath();
+            ctx.fill();
+            break;
+        }
+
+        // Accessories
+        if (this.accessory === 0) { // Round glasses
+          ctx.strokeStyle = '#ffd700';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(-6, -1, 5, 0, Math.PI * 2);
+          ctx.arc(6, -1, 5, 0, Math.PI * 2);
+          ctx.moveTo(-1, -1); ctx.lineTo(1, -1);
+          ctx.stroke();
+        } else if (this.accessory === 1) { // Headphones
+          ctx.strokeStyle = '#ff007f';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(0, -5, 17, Math.PI * 0.9, Math.PI * 0.1);
+          ctx.stroke();
+          ctx.fillStyle = '#ff007f';
+          ctx.beginPath();
+          ctx.roundRect(-18, -4, 4, 8, 2);
+          ctx.roundRect(14, -4, 4, 8, 2);
+          ctx.fill();
+        }
+
+        ctx.restore(); // Head restore
+
+        // ==========================================
+        // FLOATING NAME TAG BADGE
+        // ==========================================
+        ctx.save();
+        // Counter-flip name tag so text is always readable left-to-right!
+        ctx.scale(this.scaleX > 0 ? 1 : -1, 1);
+        const badgeY = -58 - headBob;
+        ctx.font = '700 12px Fredoka, sans-serif';
+        const nameW = ctx.measureText(this.name).width;
+        const pillW = Math.max(nameW + 16, 44);
+        const pillH = 20;
+
+        // Badge Background
+        ctx.fillStyle = this.state === 'TARGETED' ? 'rgba(255, 0, 85, 0.9)' : 'rgba(10, 16, 36, 0.85)';
+        ctx.strokeStyle = this.state === 'TARGETED' ? '#ff0055' : (this.state === 'ABDUCTED' ? '#00f5ff' : 'rgba(0, 245, 255, 0.4)');
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.roundRect(-pillW / 2, badgeY, pillW, pillH, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        // Status Indicator Dot
+        ctx.fillStyle = this.state === 'TARGETED' ? '#fff' : (this.state === 'ABDUCTED' ? '#00f5ff' : '#39ff14');
+        ctx.beginPath();
+        ctx.arc(-pillW / 2 + 7, badgeY + pillH / 2, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Text
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.name, 3, badgeY + pillH / 2);
+        ctx.restore();
+
+        ctx.restore(); // Main translate restore
+      }
+    }
+
+    /* ==========================================================================
+       5. DETAILED IMPOSING UFO MOTHERSHIP
+       ========================================================================== */
+    class UFO {
+      constructor(canvasWidth, canvasHeight) {
+        this.w = canvasWidth;
+        this.h = canvasHeight;
+        this.x = canvasWidth * 0.5;
+        this.y = canvasHeight * 0.22;
+        this.targetX = this.x;
+        this.targetY = this.y;
+        this.vx = 0;
+        this.vy = 0;
+        this.tilt = 0;
+        this.targetTilt = 0;
+
+        this.hoverTime = 0;
+        this.lightRingAngle = 0;
+
+        // Beam & Searchlight
+        this.mode = 'PATROL'; // PATROL, SCANNING, LOCKING, ABDUCTING, CELEBRATING
+        this.searchAngle = 0;
+        this.beamWidth = 84;
+        this.targetVictim = null;
+        this.irisOpen = 0; // 0 (closed) to 1 (fully open)
+        this.beamPower = 0; // 0 to 1
+        this.celebrationTimer = 0;
+        this.scanTime = 0;
+        this.patrolTimer = 0;
+
+        // Ground illumination tracking for crowd reaction
+        this.currentBeamGroundX = this.x;
+        this.currentBeamGroundRadius = 80;
+
+        // Alien pilot inside dome
+        this.alienWave = 0;
+      }
+
+      setMode(mode) {
+        this.mode = mode;
+      }
+
+      update(dt, width, height) {
+        this.w = width;
+        this.h = height;
+        this.hoverTime += dt;
+        this.lightRingAngle += dt * 3.5;
+        this.alienWave += dt * 5;
+
+        // Mode Behaviors & Searchlight Angle
+        switch (this.mode) {
+          case 'PATROL':
+            this.patrolTimer -= dt;
+            if (this.patrolTimer <= 0) {
+              this.targetX = this.w * (0.3 + Math.random() * 0.4);
+              this.targetY = this.h * (0.18 + Math.random() * 0.08);
+              this.patrolTimer = Math.random() * 4 + 3;
+            }
+            this.searchAngle = Math.sin(this.hoverTime * 1.6) * 0.25;
+            this.irisOpen += (0 - this.irisOpen) * 6 * dt;
+            this.beamPower += (0 - this.beamPower) * 6 * dt;
+            break;
+
+          case 'SCANNING':
+            this.scanTime += dt;
+            // Smooth sweeping path across the crowd
+            this.targetX = this.w * (0.2 + 0.6 * (0.5 + 0.5 * Math.sin(this.scanTime * 1.8)));
+            this.targetY = this.h * (0.19 + 0.04 * Math.cos(this.scanTime * 2.5));
+            this.searchAngle = Math.sin(this.scanTime * 3.2) * 0.42;
+            this.irisOpen += (0.4 - this.irisOpen) * 6 * dt;
+            this.beamPower += (0 - this.beamPower) * 6 * dt;
+            break;
+
+          case 'LOCKING':
+            this.searchAngle += (0 - this.searchAngle) * 12 * dt;
+            this.irisOpen += (1 - this.irisOpen) * 8 * dt;
+            this.beamPower += (1 - this.beamPower) * 12 * dt;
+            break;
+
+          case 'ABDUCTING':
+            this.searchAngle = 0;
+            this.irisOpen = 1;
+            this.beamPower = 1;
+            break;
+
+          case 'CELEBRATING':
+            this.searchAngle = 0;
+            this.irisOpen += (0 - this.irisOpen) * 5 * dt;
+            this.beamPower += (0 - this.beamPower) * 5 * dt;
+            break;
+        }
+
+        // Smooth responsive kinematics towards targetX, targetY
+        const dx = this.targetX - this.x;
+        const dy = this.targetY - this.y;
+
+        let followSpeed = 4.0;
+        if (this.mode === 'LOCKING') followSpeed = 8.5;
+        else if (this.mode === 'ABDUCTING') followSpeed = 12.0;
+        else if (this.mode === 'SCANNING') followSpeed = 4.5;
+
+        this.vx = dx * followSpeed;
+        this.vy = dy * followSpeed;
+
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+
+        // Snap precisely when locking onto target
+        if ((this.mode === 'LOCKING' || this.mode === 'ABDUCTING') && Math.abs(dx) < 2) {
+          this.x = this.targetX;
+          this.vx = 0;
+        }
+
+        // Natural Banking Tilt proportional to velocity
+        if (this.mode === 'CELEBRATING') {
+          this.tilt = Math.sin(this.hoverTime * 12) * 0.22;
+        } else {
+          const targetTilt = Math.max(-0.25, Math.min(0.25, (this.vx / 320) * 0.25));
+          this.tilt += (targetTilt - this.tilt) * 7 * dt;
+        }
+      }
+
+      drawBeam(ctx, groundYResolver) {
+        if (this.mode === 'PATROL' || this.mode === 'SCANNING') {
+          // Volumetric Searchlight Cone
+          ctx.save();
+          const startX = this.x;
+          const startY = this.y + 16;
+          
+          // Deflection angle from vertical (0 is straight down, positive is right +X, negative is left -X)
+          const angle = this.searchAngle;
+          
+          // Accurately calculate where the center of the beam intersects the ground
+          const approxGroundH = (this.h * 0.81) - startY;
+          const groundHitX = startX + Math.tan(angle) * approxGroundH;
+          const groundHitY = groundYResolver(groundHitX);
+
+          // Update tracking for characters
+          this.currentBeamGroundX = groundHitX;
+          this.currentBeamGroundRadius = 80 + Math.abs(Math.tan(angle)) * 30;
+
+          // Ground reflection spotlight dimensions
+          const spotRadiusX = this.currentBeamGroundRadius;
+          const spotRadiusY = 22;
+
+          // Top hatch width
+          const hatchW = 16;
+
+          // Volumetric Cone connecting UFO hatch directly to the ground spotlight
+          const beamGrad = ctx.createLinearGradient(startX, startY, groundHitX, groundHitY);
+          beamGrad.addColorStop(0, 'rgba(0, 245, 255, 0.45)');
+          beamGrad.addColorStop(0.3, 'rgba(0, 245, 255, 0.22)');
+          beamGrad.addColorStop(0.75, 'rgba(57, 255, 20, 0.12)');
+          beamGrad.addColorStop(1, 'rgba(57, 255, 20, 0.35)');
+
+          ctx.fillStyle = beamGrad;
+          ctx.beginPath();
+          ctx.moveTo(startX - hatchW, startY);
+          ctx.lineTo(startX + hatchW, startY);
+          ctx.lineTo(groundHitX + spotRadiusX * 0.85, groundHitY);
+          ctx.lineTo(groundHitX - spotRadiusX * 0.85, groundHitY);
+          ctx.closePath();
+          ctx.fill();
+
+          // Ground projection spotlight oval
+          const spotGrad = ctx.createRadialGradient(groundHitX, groundHitY, 5, groundHitX, groundHitY, spotRadiusX);
+          spotGrad.addColorStop(0, 'rgba(255, 255, 255, 0.7)');
+          spotGrad.addColorStop(0.3, 'rgba(0, 245, 255, 0.55)');
+          spotGrad.addColorStop(0.7, 'rgba(57, 255, 20, 0.25)');
+          spotGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+          ctx.fillStyle = spotGrad;
+          ctx.beginPath();
+          ctx.ellipse(groundHitX, groundHitY, spotRadiusX, spotRadiusY, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+        } else if (this.beamPower > 0.05) {
+          // Intense Vertical Tractor Beam Column directly beneath the UFO
+          ctx.save();
+          const startX = this.x;
+          const startY = this.y + 16;
+          const targetGroundY = groundYResolver(startX);
+          const colW = this.beamWidth * this.beamPower;
+
+          // Outer Plasma Sheath
+          const sheathGrad = ctx.createLinearGradient(startX - colW, startY, startX + colW, startY);
+          sheathGrad.addColorStop(0, 'rgba(0, 245, 255, 0)');
+          sheathGrad.addColorStop(0.2, 'rgba(0, 245, 255, 0.4)');
+          sheathGrad.addColorStop(0.5, 'rgba(57, 255, 20, 0.6)');
+          sheathGrad.addColorStop(0.8, 'rgba(0, 245, 255, 0.4)');
+          sheathGrad.addColorStop(1, 'rgba(0, 245, 255, 0)');
+
+          ctx.fillStyle = sheathGrad;
+          ctx.beginPath();
+          ctx.moveTo(startX - colW * 0.45, startY);
+          ctx.lineTo(startX + colW * 0.45, startY);
+          ctx.lineTo(startX + colW, targetGroundY);
+          ctx.lineTo(startX - colW, targetGroundY);
+          ctx.closePath();
+          ctx.fill();
+
+          // Intense White Core Beam
+          const coreGrad = ctx.createLinearGradient(startX - colW * 0.3, startY, startX + colW * 0.3, startY);
+          coreGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+          coreGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.95)');
+          coreGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          ctx.fillStyle = coreGrad;
+          ctx.beginPath();
+          ctx.moveTo(startX - colW * 0.15, startY);
+          ctx.lineTo(startX + colW * 0.15, startY);
+          ctx.lineTo(startX + colW * 0.35, targetGroundY);
+          ctx.lineTo(startX - colW * 0.35, targetGroundY);
+          ctx.closePath();
+          ctx.fill();
+
+          // Rising Holographic Energy Rings
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.lineWidth = 2.5;
+          const ringSpacing = 45;
+          const ringOffset = (Date.now() * 0.15) % ringSpacing;
+          for (let ry = targetGroundY - ringOffset; ry > startY; ry -= ringSpacing) {
+            const frac = (ry - startY) / (targetGroundY - startY);
+            const rw = (colW * 0.45 + (colW - colW * 0.45) * frac) * 0.9;
+            ctx.beginPath();
+            ctx.ellipse(startX, ry, rw, rw * 0.22, 0, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          // Ground Impact Glow Ring
+          const groundGrad = ctx.createRadialGradient(startX, targetGroundY, 10, startX, targetGroundY, colW * 1.3);
+          groundGrad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+          groundGrad.addColorStop(0.3, 'rgba(0, 245, 255, 0.8)');
+          groundGrad.addColorStop(0.7, 'rgba(57, 255, 20, 0.4)');
+          groundGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = groundGrad;
+          ctx.beginPath();
+          ctx.ellipse(startX, targetGroundY, colW * 1.3, colW * 0.4, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+        }
+      }
+
+      drawSaucer(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.tilt);
+
+        // Saucer Dimensions
+        const discW = 120;
+        const discH = 36;
+
+        // 1. Bottom Antigravity Thrusters Glow
+        const thrusterGrad = ctx.createRadialGradient(0, 16, 2, 0, 20, 45);
+        thrusterGrad.addColorStop(0, '#00f5ff');
+        thrusterGrad.addColorStop(0.4, '#39ff14');
+        thrusterGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = thrusterGrad;
+        ctx.beginPath();
+        ctx.ellipse(0, 18, 42, 16, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. Cockpit Glass Dome
+        const domeW = 44;
+        const domeH = 34;
+        const domeGrad = ctx.createRadialGradient(-8, -20, 5, 0, -14, domeW);
+        domeGrad.addColorStop(0, 'rgba(200, 250, 255, 0.9)');
+        domeGrad.addColorStop(0.4, 'rgba(0, 200, 255, 0.6)');
+        domeGrad.addColorStop(1, 'rgba(0, 60, 120, 0.85)');
+        ctx.fillStyle = domeGrad;
+        ctx.beginPath();
+        ctx.ellipse(0, -12, domeW, domeH, 0, Math.PI, 0); // Upper half
+        ctx.fill();
+
+        // 3. Inside Dome: Cute Alien Commander!
+        ctx.save();
+        ctx.translate(0, -14);
+        // Alien Head
+        ctx.fillStyle = '#39ff14';
+        ctx.beginPath();
+        ctx.ellipse(0, -4, 11, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Glossy Big Black Eyes
+        ctx.fillStyle = '#060a14';
+        ctx.beginPath();
+        ctx.ellipse(-5, -4, 4, 6, -0.25, 0, Math.PI * 2);
+        ctx.ellipse(5, -4, 4, 6, 0.25, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eye glints
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(-4, -6, 1.2, 0, Math.PI * 2);
+        ctx.arc(6, -6, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Antennae with glowing orbs
+        ctx.strokeStyle = '#39ff14';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(-4, -16); ctx.lineTo(-8, -24);
+        ctx.moveTo(4, -16); ctx.lineTo(8, -24);
+        ctx.stroke();
+        ctx.fillStyle = '#00f5ff';
+        ctx.beginPath();
+        ctx.arc(-8, -24, 2.5, 0, Math.PI * 2);
+        ctx.arc(8, -24, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Little alien waving hand
+        const wave = Math.sin(this.alienWave) * 4;
+        ctx.fillStyle = '#39ff14';
+        ctx.beginPath();
+        ctx.arc(10, -2 + wave, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Dome Glass Specular Arc Highlight
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(-10, -22, 14, Math.PI * 1.1, Math.PI * 1.5);
+        ctx.stroke();
+
+        // 4. Main Metallic Saucer Hull (Multi-tiered chrome & gunmetal)
+        // Lower Hull
+        const lowerHullGrad = ctx.createLinearGradient(0, 0, 0, discH);
+        lowerHullGrad.addColorStop(0, '#2d3748');
+        lowerHullGrad.addColorStop(0.5, '#1a202c');
+        lowerHullGrad.addColorStop(1, '#0d1117');
+        ctx.fillStyle = lowerHullGrad;
+        ctx.beginPath();
+        ctx.ellipse(0, 8, discW * 0.78, discH * 0.65, 0, 0, Math.PI);
+        ctx.fill();
+
+        // Main Disc Rim
+        const rimGrad = ctx.createLinearGradient(0, -discH * 0.4, 0, discH * 0.4);
+        rimGrad.addColorStop(0, '#718096');
+        rimGrad.addColorStop(0.3, '#e2e8f0');
+        rimGrad.addColorStop(0.6, '#4a5568');
+        rimGrad.addColorStop(1, '#1a202c');
+        ctx.fillStyle = rimGrad;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, discW, discH * 0.48, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Metallic Rim Panel Stroke
+        ctx.strokeStyle = 'rgba(0, 245, 255, 0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // 5. Perimeter Rotating LED Light Pods
+        const podCount = 14;
+        for (let i = 0; i < podCount; i++) {
+          const angle = (i / podCount) * Math.PI * 2 + this.lightRingAngle;
+          const px = Math.cos(angle) * (discW * 0.88);
+          const py = Math.sin(angle) * (discH * 0.4);
+
+          // Only draw if on front/sides of saucer ellipse
+          const isFront = Math.sin(angle) > -0.25;
+          const colorIndex = (i + Math.floor(this.hoverTime * 4)) % 4;
+          const colors = ['#00f5ff', '#39ff14', '#ff007f', '#ffb703'];
+          const color = colors[colorIndex];
+
+          ctx.fillStyle = color;
+          ctx.shadowColor = color;
+          ctx.shadowBlur = isFront ? 14 : 4;
+          ctx.beginPath();
+          ctx.ellipse(px, py, 4.5, 3.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+
+        // 6. Central Underbelly Iris Hatch
+        const irisR = 24;
+        ctx.fillStyle = '#0a0f1d';
+        ctx.beginPath();
+        ctx.ellipse(0, 14, irisR, irisR * 0.38, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Glowing center aperture when open
+        if (this.irisOpen > 0.05) {
+          ctx.fillStyle = `rgba(0, 245, 255, ${this.irisOpen * 0.95})`;
+          ctx.shadowColor = '#00f5ff';
+          ctx.shadowBlur = 20;
+          ctx.beginPath();
+          ctx.ellipse(0, 14, irisR * this.irisOpen * 0.8, irisR * 0.35 * this.irisOpen, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+
+        ctx.restore();
+      }
+    }
+
+    /* ==========================================================================
+       6. CORE APP CONTROLLER & SEQUENCE STATE MACHINE
+       ========================================================================== */
+    class App {
+      constructor() {
+        this.canvas = document.getElementById('world-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        this.sound = new SoundController();
+        this.particles = new ParticleSystem();
+        this.environment = new Environment();
+        this.ufo = null;
+        this.characters = [];
+        this.abductedHistory = [];
+
+        // Game Settings
+        this.pickCount = 1;
+        this.excludeAbducted = true;
+        this.scanSpeed = 'NORMAL'; // FAST (2.5s), NORMAL (4.5s), SUSPENSE (7s)
+        this.isBusy = false;
+
+        // Presets Data
+        this.presets = {
+          scifi: ['Buzz Lightyear', 'Ellen Ripley', 'Mr. Spock', 'Han Solo', 'Luke Skywalker', 'Princess Leia', 'Gamora', 'Captain Kirk', 'Doctor Who', 'Neo', 'Trinity', 'Morpheus'],
+          office: ['Michael Scott', 'Dwight Schrute', 'Jim Halpert', 'Pam Beesly', 'Angela Martin', 'Kevin Malone', 'Stanley Hudson', 'Oscar Martinez', 'Creed Bratton', 'Meredith Palmer', 'Andy Bernard'],
+          anime: ['Naruto', 'Goku', 'Sailor Moon', 'Luffy', 'Levi Ackerman', 'Tanjiro', 'Nezuko', 'Saitama', 'Spike Spiegel', 'Edward Elric', 'Gojo Satoru'],
+          animals: ['Captain Corgi', 'Detective Cat', 'Boba Bear', 'Space Shiba', 'Astronaut Otter', 'Galactic Bunny', 'Cosmic Hamster', 'Pixel Penguin', 'Rocket Raccoon']
+        };
+
+        this.init();
+      }
+
+      init() {
+        this.handleResize();
+        window.addEventListener('resize', () => this.handleResize());
+
+        this.ufo = new UFO(this.width, this.height);
+        this.environment.init(this.width, this.height);
+        this.particles.init(this.width, this.height);
+
+        // Load Initial Squad
+        const initialNames = this.presets.scifi;
+        document.getElementById('names-input').value = initialNames.join('\n');
+        this.syncCharactersFromInput();
+
+        this.setupEventListeners();
+
+        // Start 60 FPS RequestAnimationFrame Loop with Delta-Time
+        this.lastTime = performance.now();
+        requestAnimationFrame((t) => this.loop(t));
+      }
+
+      handleResize() {
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+        this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        this.canvas.width = this.width * this.dpr;
+        this.canvas.height = this.height * this.dpr;
+        this.canvas.style.width = this.width + 'px';
+        this.canvas.style.height = this.height + 'px';
+
+        this.ctx.scale(this.dpr, this.dpr);
+
+        if (this.particles) this.particles.init(this.width, this.height);
+        if (this.environment) this.environment.init(this.width, this.height);
+      }
+
+      setupEventListeners() {
+        // First user interaction activates AudioContext
+        const unlockAudio = () => {
+          this.sound.ensureActive();
+          this.sound.startUfoHum();
+          window.removeEventListener('pointerdown', unlockAudio);
+          window.removeEventListener('keydown', unlockAudio);
+        };
+        window.addEventListener('pointerdown', unlockAudio);
+        window.addEventListener('keydown', unlockAudio);
+
+        // Sound Toggle
+        const sndBtn = document.getElementById('btn-sound-toggle');
+        sndBtn.addEventListener('click', () => {
+          const isMuted = this.sound.toggleMute();
+          sndBtn.textContent = isMuted ? '🔇' : '🔊';
+          sndBtn.classList.toggle('active', !isMuted);
+        });
+
+        // Dock Toggle
+        const dock = document.getElementById('control-dock');
+        const quickDock = document.getElementById('quick-dock');
+        const btnDockToggle = document.getElementById('btn-dock-toggle');
+        const btnDockClose = document.getElementById('btn-dock-close');
+        const quickShowPanel = document.getElementById('quick-show-panel');
+
+        const toggleDock = (forceShow) => {
+          const isCollapsed = dock.classList.contains('collapsed');
+          const shouldShow = forceShow !== undefined ? forceShow : isCollapsed;
+          dock.classList.toggle('collapsed', !shouldShow);
+          quickDock.style.display = shouldShow ? 'none' : 'flex';
+          btnDockToggle.classList.toggle('active', shouldShow);
+          this.sound.playClick();
+        };
+
+        btnDockToggle.addEventListener('click', () => toggleDock());
+        btnDockClose.addEventListener('click', () => toggleDock(false));
+        quickShowPanel.addEventListener('click', () => toggleDock(true));
+
+        // Presets Chips
+        document.querySelectorAll('.preset-chip').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            this.sound.playClick();
+            const presetKey = e.target.dataset.preset;
+            if (presetKey === 'clear') {
+              document.getElementById('names-input').value = '';
+            } else if (this.presets[presetKey]) {
+              document.getElementById('names-input').value = this.presets[presetKey].join('\n');
+            }
+            this.syncCharactersFromInput();
+          });
+        });
+
+        // Stepper for Pick Count
+        const countDisplay = document.getElementById('stepper-count');
+        document.getElementById('stepper-minus').addEventListener('click', () => {
+          this.sound.playClick();
+          if (this.pickCount > 1) {
+            this.pickCount--;
+            countDisplay.textContent = this.pickCount;
+          }
+        });
+        document.getElementById('stepper-plus').addEventListener('click', () => {
+          this.sound.playClick();
+          const activeLen = this.characters.filter(c => !c.isAbducted).length;
+          if (this.pickCount < Math.max(1, activeLen)) {
+            this.pickCount++;
+            countDisplay.textContent = this.pickCount;
+          }
+        });
+
+        // Exclude Toggle
+        const excludeToggle = document.getElementById('toggle-exclude');
+        excludeToggle.addEventListener('change', (e) => {
+          this.excludeAbducted = e.target.checked;
+          this.sound.playClick();
+        });
+
+        // Speed Toggle
+        const speedBtn = document.getElementById('btn-speed-toggle');
+        const speeds = ['FAST', 'NORMAL', 'SUSPENSE'];
+        speedBtn.addEventListener('click', () => {
+          this.sound.playClick();
+          const nextIdx = (speeds.indexOf(this.scanSpeed) + 1) % speeds.length;
+          this.scanSpeed = speeds[nextIdx];
+          speedBtn.textContent = `⚡ ${this.scanSpeed}`;
+        });
+
+        // Action Buttons
+        document.getElementById('btn-sync-names').addEventListener('click', () => {
+          this.sound.playClick();
+          this.syncCharactersFromInput();
+        });
+
+        document.getElementById('btn-reset-field').addEventListener('click', () => {
+          this.sound.playClick();
+          this.resetField();
+        });
+
+        // Big Abduct Buttons
+        const startAbductionHandler = () => {
+          this.sound.ensureActive();
+          this.sound.startUfoHum();
+          this.sound.playClick();
+          this.startAbductionSequence();
+        };
+
+        document.getElementById('btn-start-abduct').addEventListener('click', startAbductionHandler);
+        document.getElementById('quick-abduct-btn').addEventListener('click', startAbductionHandler);
+
+        // Modal Handlers
+        document.getElementById('btn-modal-close').addEventListener('click', () => {
+          this.sound.playClick();
+          this.closeResultModal();
+        });
+
+        document.getElementById('btn-modal-beam-back').addEventListener('click', () => {
+          this.sound.playClick();
+          this.beamBackLastVictims();
+        });
+
+        // History Drawer
+        const historyDrawer = document.getElementById('history-drawer');
+        document.getElementById('btn-history-toggle').addEventListener('click', () => {
+          this.sound.playClick();
+          historyDrawer.classList.toggle('open');
+        });
+        document.getElementById('btn-history-close').addEventListener('click', () => {
+          this.sound.playClick();
+          historyDrawer.classList.remove('open');
+        });
+
+        // Help Modal
+        const helpModal = document.getElementById('help-modal');
+        document.getElementById('btn-help-toggle').addEventListener('click', () => {
+          this.sound.playClick();
+          helpModal.classList.add('open');
+        });
+        document.getElementById('btn-help-close').addEventListener('click', () => {
+          this.sound.playClick();
+          helpModal.classList.remove('open');
+        });
+      }
+
+      syncCharactersFromInput() {
+        const rawText = document.getElementById('names-input').value;
+        const names = rawText
+          .split(/[\n,]+/)
+          .map(n => n.trim())
+          .filter(n => n.length > 0);
+
+        // Keep existing characters if name matches to preserve position & styles
+        const newChars = [];
+        const slotWidth = (this.width - 120) / Math.max(names.length, 1);
+
+        names.forEach((name, idx) => {
+          const existing = this.characters.find(c => c.name.toLowerCase() === name.toLowerCase());
+          if (existing && !existing.isAbducted) {
+            newChars.push(existing);
+          } else {
+            const targetX = 60 + idx * slotWidth + (Math.random() - 0.5) * 30;
+            const groundY = this.environment.getGroundY(targetX, this.width, this.height);
+            newChars.push(new Character(name, targetX, groundY));
+          }
+        });
+
+        this.characters = newChars;
+        this.updateCounts();
+      }
+
+      resetField() {
+        this.characters.forEach(c => {
+          c.isAbducted = false;
+          c.state = 'IDLE';
+          c.abductProgress = 0;
+          c.y = this.environment.getGroundY(c.x, this.width, this.height);
+          c.vx = (Math.random() - 0.5) * 40;
+        });
+        this.updateCounts();
+        this.setHudStatus('EARTH REPOPULATED & SECURE', 'var(--neon-green)');
+      }
+
+      updateCounts() {
+        const active = this.characters.filter(c => !c.isAbducted).length;
+        document.getElementById('active-count-badge').textContent = `${active} Candidate${active === 1 ? '' : 's'}`;
+        // Adjust stepper cap if necessary
+        if (this.pickCount > Math.max(1, active)) {
+          this.pickCount = Math.max(1, active);
+          document.getElementById('stepper-count').textContent = this.pickCount;
+        }
+      }
+
+      setHudStatus(text, color = 'var(--neon-cyan)') {
+        const badge = document.getElementById('hud-status-badge');
+        const span = document.getElementById('hud-status-text');
+        span.textContent = text;
+        badge.style.color = color;
+        badge.style.borderColor = color;
+      }
+
+      setButtonBusy(busy) {
+        this.isBusy = busy;
+        document.getElementById('btn-start-abduct').disabled = busy;
+        document.getElementById('quick-abduct-btn').disabled = busy;
+      }
+
+      /* ==========================================================================
+         CINEMATIC ABDUCTION TIMELINE ORCHESTRATION
+         ========================================================================== */
+      async startAbductionSequence() {
+        const activeCandidates = this.characters.filter(c => !c.isAbducted);
+        if (activeCandidates.length === 0) {
+          alert('No candidates left on Earth! Add more names or click "Reset Earth" to drop them back!');
+          return;
+        }
+
+        this.setButtonBusy(true);
+
+        // Determine targets randomly without duplicates
+        const countToPick = Math.min(this.pickCount, activeCandidates.length);
+        const shuffled = [...activeCandidates].sort(() => Math.random() - 0.5);
+        const chosenVictims = shuffled.slice(0, countToPick);
+
+        // Determine durations based on suspense setting
+        const scanDurations = { FAST: 2200, NORMAL: 4200, SUSPENSE: 6500 };
+        const scanDuration = scanDurations[this.scanSpeed] || 4200;
+
+        // ----------------------------------------------------
+        // PHASE 1: SCANNING PHASE (SUSPENSE SEARCHLIGHT SWEEPS)
+        // ----------------------------------------------------
+        this.setHudStatus('🔍 SEARCHING FOR OPTIMAL SPECIMEN...', 'var(--neon-cyan)');
+        this.ufo.setMode('SCANNING');
+        this.ufo.scanTime = 0;
+
+        // All candidates go into panic mode
+        this.characters.forEach(c => {
+          if (!c.isAbducted) c.state = 'PANIC';
+        });
+
+        // Fast sonar beeps & sweat drops during scanning
+        const sweepInterval = setInterval(() => {
+          this.sound.playScanBeep(Math.random() * 0.4 + 0.8);
+          // Random candidate pops sweat
+          const randChar = activeCandidates[Math.floor(Math.random() * activeCandidates.length)];
+          if (randChar) this.particles.spawnSweatDrop(randChar.x, randChar.y - 45);
+        }, 220);
+
+        // Allow UFO to smoothly sweep across the crowd
+        await new Promise(r => setTimeout(r, scanDuration));
+        clearInterval(sweepInterval);
+
+        // ----------------------------------------------------
+        // PHASE 2 & 3: TARGET LOCK & LEVITATION FOR EACH VICTIM
+        // ----------------------------------------------------
+        for (let idx = 0; idx < chosenVictims.length; idx++) {
+          const victim = chosenVictims[idx];
+
+          this.setHudStatus(`⚡ TARGET LOCKED: [${victim.name.toUpperCase()}]`, 'var(--neon-magenta)');
+          this.sound.playTargetLock();
+
+          // Victim freezes in terror directly at their position
+          victim.state = 'TARGETED';
+          victim.vx = 0;
+          this.particles.spawnSweatDrop(victim.x, victim.y - 45);
+
+          // Command UFO to navigate directly above the victim
+          this.ufo.targetX = victim.x;
+          this.ufo.targetY = this.height * 0.22;
+          this.ufo.setMode('LOCKING');
+
+          // Wait until UFO has arrived and is directly centered above the victim
+          const lockStart = performance.now();
+          while (Math.abs(this.ufo.x - victim.x) > 3 && performance.now() - lockStart < 2500) {
+            await new Promise(r => requestAnimationFrame(r));
+          }
+
+          // Exact coordinate snap to eliminate any drift
+          this.ufo.x = victim.x;
+          this.ufo.targetX = victim.x;
+          this.ufo.vx = 0;
+          this.ufo.tilt = 0;
+
+          // Dramatic pause right above the victim
+          await new Promise(r => setTimeout(r, 450));
+
+          // ENGAGE TRACTOR BEAM!
+          this.setHudStatus(`🛸 ENGAGING TRACTOR BEAM: LIFTING SPECIMEN...`, 'var(--neon-green)');
+          this.sound.playTractorBeamEngage();
+          this.ufo.setMode('ABDUCTING');
+
+          victim.state = 'ABDUCTED';
+          victim.x = this.ufo.x; // Strict alignment
+          victim.abductStartX = victim.x;
+          victim.abductStartY = victim.y;
+          victim.targetUfoY = this.ufo.y + 14;
+          victim.abductProgress = 0;
+
+          // Spawn beam particles as victim rises
+          const liftStart = performance.now();
+          const liftDuration = 2200;
+          await new Promise(resolve => {
+            const beamInt = setInterval(() => {
+              this.particles.spawnBeamParticle(this.ufo.x, this.ufo.y + 16, victim.groundY);
+              if (performance.now() - liftStart >= liftDuration) {
+                clearInterval(beamInt);
+                resolve();
+              }
+            }, 50);
+          });
+
+          // Victim enters saucer: Comical cork pop + suction burst
+          this.sound.stopBeamLoop();
+          this.sound.playComicalPop();
+          victim.isAbducted = true;
+
+          // Suction burst
+          this.particles.spawnConfetti(this.ufo.x, this.ufo.y + 16, 35);
+          await new Promise(r => setTimeout(r, 400));
+        }
+
+        // ----------------------------------------------------
+        // PHASE 4: SURVIVORS' RELIEF & CELEBRATION!
+        // ----------------------------------------------------
+        this.setHudStatus('🎉 ABDUCTION COMPLETE: SPECIMEN IN CARGO!', 'var(--neon-green)');
+        this.ufo.setMode('CELEBRATING');
+        this.sound.playReliefChime();
+
+        // Confetti Cannons
+        this.particles.spawnConfetti(this.width * 0.2, this.height * 0.3, 80);
+        this.particles.spawnConfetti(this.width * 0.8, this.height * 0.3, 80);
+
+        // Survivors comic relief
+        const phewPhrases = [
+          'PHEW! 💨',
+          'I SURVIVED!',
+          'NOT ME! 🙌',
+          'BYE FRIEND!',
+          'HAVE FUN IN SPACE!',
+          'WHEW... 💦',
+          'I LIVE ANOTHER DAY!'
+        ];
+
+        this.characters.forEach(c => {
+          if (!c.isAbducted) {
+            c.state = 'RELIEVED';
+            const phrase = phewPhrases[Math.floor(Math.random() * phewPhrases.length)];
+            this.particles.spawnSpeechBubble(c.x, c.y - 45, phrase);
+          }
+        });
+
+        // Record in Abduction History
+        this.recordAbduction(chosenVictims);
+
+        // Show Modal Announcement
+        await new Promise(r => setTimeout(r, 1000));
+        this.showResultModal(chosenVictims);
+
+        // Restore survivors back to idle after a few seconds
+        setTimeout(() => {
+          this.characters.forEach(c => {
+            if (!c.isAbducted && c.state === 'RELIEVED') {
+              c.state = 'IDLE';
+            }
+          });
+          this.ufo.setMode('PATROL');
+          this.ufo.targetX = this.width * 0.5;
+          this.ufo.targetY = this.height * 0.22;
+          this.setButtonBusy(false);
+          this.setHudStatus('PATROLLING EARTH SECTOR', 'var(--neon-cyan)');
+        }, 3500);
+
+        this.updateCounts();
+      }
+
+      showResultModal(victims) {
+        this.lastAbductedVictims = victims;
+        const modal = document.getElementById('result-modal');
+        const list = document.getElementById('modal-victims-list');
+        list.innerHTML = '';
+
+        victims.forEach((v, i) => {
+          const pill = document.createElement('div');
+          pill.className = 'victim-pill';
+          pill.style.animationDelay = `${i * 0.15}s`;
+          pill.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 24px;">👽</span>
+              <span class="victim-name">${v.name}</span>
+            </div>
+            <span class="victim-badge">SPECIMEN #${Math.floor(Math.random() * 899 + 100)}</span>
+          `;
+          list.appendChild(pill);
+        });
+
+        modal.classList.add('open');
+      }
+
+      closeResultModal() {
+        document.getElementById('result-modal').classList.remove('open');
+        if (!this.excludeAbducted) {
+          // If exclude toggle is off, release victims back to Earth
+          this.beamBackLastVictims();
+        }
+      }
+
+      beamBackLastVictims() {
+        if (!this.lastAbductedVictims) return;
+        this.lastAbductedVictims.forEach(v => {
+          v.isAbducted = false;
+          v.state = 'IDLE';
+          v.abductProgress = 0;
+          v.y = this.environment.getGroundY(v.x, this.width, this.height);
+          this.particles.spawnConfetti(v.x, v.y, 25);
+        });
+        this.closeResultModal();
+        this.updateCounts();
+        this.setHudStatus('SPECIMEN BEAMED SAFELY BACK TO EARTH', 'var(--neon-green)');
+      }
+
+      recordAbduction(victims) {
+        const entry = {
+          time: new Date().toLocaleTimeString(),
+          names: victims.map(v => v.name)
+        };
+        this.abductedHistory.unshift(entry);
+
+        const list = document.getElementById('history-list-items');
+        if (this.abductedHistory.length === 1) list.innerHTML = '';
+
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.innerHTML = `
+          <div class="history-meta">
+            <span>MISSION ROUND #${this.abductedHistory.length}</span>
+            <span>${entry.time}</span>
+          </div>
+          <div class="history-names">🛸 ${entry.names.join(', ')}</div>
+        `;
+        list.prepend(item);
+      }
+
+      /* ==========================================================================
+         MAIN 60 FPS ANIMATION LOOP
+         ========================================================================== */
+      loop(currentTime) {
+        const dt = Math.min((currentTime - this.lastTime) / 1000, 0.1);
+        this.lastTime = currentTime;
+
+        // 1. Update Game Physics
+        this.ufo.update(dt, this.width, this.height);
+        this.sound.setUfoPitch(Math.abs(this.ufo.vx) / 300);
+
+        const groundResolver = (x) => this.environment.getGroundY(x, this.width, this.height);
+        this.characters.forEach(c => c.update(dt, this.width, groundResolver, this.ufo));
+        this.particles.update(dt, this.width, this.height);
+
+        // 2. Clear Screen
+        this.ctx.clearRect(0, 0, this.width, this.height);
+
+        // 3. Draw Environment Layers (Sky, Moon, Distant Mountains, Midground, Foreground Hill)
+        this.environment.draw(this.ctx, this.width, this.height, currentTime * 0.001);
+
+        // 4. Draw Stars & Fireflies
+        this.particles.drawStars(this.ctx, currentTime * 0.001);
+        this.particles.drawFireflies(this.ctx, currentTime * 0.001);
+
+        // 5. Draw UFO Light Beams & Tractor Column (Intersects terrain & characters)
+        this.ufo.drawBeam(this.ctx, groundResolver);
+
+        // 6. Draw Characters (Sorted by Y so foreground renders over background)
+        const sortedChars = [...this.characters].sort((a, b) => a.y - b.y);
+        sortedChars.forEach(c => c.draw(this.ctx));
+
+        // 7. Draw UFO Saucer & Cockpit Dome
+        this.ufo.drawSaucer(this.ctx);
+
+        // 8. Draw Confetti, Sparks, Sweat Drops & Speech Bubbles on Top
+        this.particles.drawParticles(this.ctx);
+
+        requestAnimationFrame((t) => this.loop(t));
+      }
+    }
+
+    // Launch Application once DOM is Ready
+    window.addEventListener('DOMContentLoaded', () => {
+      window.app = new App();
+    });
+  </script>
+</body>
+</html>
