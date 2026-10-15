@@ -1461,6 +1461,10 @@
       }
 
       spawnConfetti(x, y, count = 100) {
+        // Safety cap: prune oldest confetti if count gets excessive to protect performance
+        if (this.confetti.length > 400) {
+          this.confetti.splice(0, this.confetti.length - 200);
+        }
         const colors = ['#00f5ff', '#39ff14', '#ff007f', '#ffb703', '#9d4edd', '#ffffff', '#fffa65'];
         for (let i = 0; i < count; i++) {
           const angle = Math.random() * Math.PI * 2;
@@ -3095,7 +3099,7 @@
 
         names.forEach((name, idx) => {
           const existing = this.characters.find(c => c.name.toLowerCase() === name.toLowerCase());
-          if (existing && !existing.isAbducted) {
+          if (existing) {
             newChars.push(existing);
           } else {
             const targetX = 60 + idx * slotWidth + (Math.random() - 0.5) * 30;
@@ -3340,19 +3344,41 @@
         if (!this.excludeAbducted) {
           // If exclude toggle is off, release victims back to Earth
           this.beamBackLastVictims();
+        } else {
+          // If kept in cargo, clear the reference to prevent stale beam backs
+          this.lastAbductedVictims = null;
         }
       }
 
       beamBackLastVictims() {
-        if (!this.lastAbductedVictims) return;
-        this.lastAbductedVictims.forEach(v => {
+        if (!this.lastAbductedVictims || this.lastAbductedVictims.length === 0) return;
+        const victims = this.lastAbductedVictims;
+        this.lastAbductedVictims = null; // Clear immediately to break mutual recursion
+
+        victims.forEach(v => {
           v.isAbducted = false;
           v.state = 'IDLE';
           v.abductProgress = 0;
           v.y = this.environment.getGroundY(v.x, this.width, this.height);
+          v.vx = (Math.random() - 0.5) * 30;
+          v.vy = 0;
+
+          // Ensure victim is in this.characters in case input was synced during abduction
+          if (!this.characters.includes(v)) {
+            const dupIdx = this.characters.findIndex(c => c.name.toLowerCase() === v.name.toLowerCase());
+            if (dupIdx !== -1) {
+              this.characters[dupIdx] = v;
+            } else {
+              this.characters.push(v);
+            }
+          }
+
           this.particles.spawnConfetti(v.x, v.y, 25);
         });
-        this.closeResultModal();
+
+        // Close modal directly without triggering closeResultModal loop
+        document.getElementById('result-modal').classList.remove('open');
+        this.sound.playReliefChime();
         this.updateCounts();
         this.setHudStatus('SPECIMEN BEAMED SAFELY BACK TO EARTH', 'var(--neon-green)');
       }
